@@ -1,23 +1,73 @@
-import { useState } from "react";
-import { Upload, Send, CheckCircle } from "lucide-react";
+import { useState, useRef } from "react";
+import { useParams, Link } from "react-router-dom";
+import { Upload, Send, CheckCircle, ArrowLeft, FileText, X } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
+import { usePFESubjectById, useSubmitApplication, uploadApplicationFile } from "@/hooks/usePFESubjects";
+import { toast } from "sonner";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const ApplicationForm = () => {
+  const { subjectId } = useParams<{ subjectId: string }>();
+  const { data: subject, isLoading: loadingSubject } = usePFESubjectById(subjectId || "");
+  const submitMutation = useSubmitApplication();
+
   const [submitted, setSubmitted] = useState(false);
-  const [dragOver, setDragOver] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [form, setForm] = useState({ fullName: "", email: "", phone: "", university: "", academicLevel: "", fieldOfStudy: "" });
+  const [cvFile, setCvFile] = useState<File | null>(null);
+  const [motivFile, setMotivFile] = useState<File | null>(null);
+  const [agreed, setAgreed] = useState(false);
+  const cvRef = useRef<HTMLInputElement>(null);
+  const motivRef = useRef<HTMLInputElement>(null);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!cvFile) { toast.error("Please upload your CV."); return; }
+    if (!agreed) { toast.error("Please agree to the terms."); return; }
+
+    setSubmitting(true);
+    try {
+      const cvUrl = await uploadApplicationFile(cvFile, "cv");
+      let motivUrl: string | undefined;
+      if (motivFile) motivUrl = await uploadApplicationFile(motivFile, "motivation-letters");
+
+      await submitMutation.mutateAsync({
+        full_name: form.fullName,
+        email: form.email,
+        phone: form.phone,
+        university: form.university,
+        academic_level: form.academicLevel || null,
+        field_of_study: form.fieldOfStudy || null,
+        subject_id: subject?.id || null,
+        application_type: "PFE",
+        cv_url: cvUrl,
+        motivation_letter_url: motivUrl || null,
+        agreed_terms: true,
+        preferred_department: subject?.department || null,
+        preferred_site: subject?.site || null,
+      });
+      setSubmitted(true);
+    } catch (err: any) {
+      toast.error(err.message || "Failed to submit application.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   if (submitted) {
     return (
       <div className="min-h-screen bg-background">
         <Navbar />
         <div className="pt-32 pb-16 flex items-center justify-center">
-          <div className="text-center animate-fade-in">
+          <div className="text-center animate-fade-in max-w-md">
             <div className="mx-auto mb-6 h-20 w-20 rounded-full bg-success/10 flex items-center justify-center">
               <CheckCircle className="h-10 w-10 text-success" />
             </div>
             <h2 className="text-2xl font-bold text-foreground mb-2">Application Submitted!</h2>
-            <p className="text-muted-foreground mb-6">Thank you for applying. We will review your application and get back to you soon.</p>
+            <p className="text-muted-foreground mb-2">Thank you for applying. Your application has entered the review pipeline.</p>
+            <p className="text-sm text-muted-foreground mb-6">Pipeline: <span className="font-semibold text-foreground">Candidate → RH Review → Interview → Acceptance</span></p>
+            <Link to="/pfe-book" className="text-primary text-sm font-semibold hover:underline">← Back to PFE Book</Link>
           </div>
         </div>
         <Footer />
@@ -30,67 +80,104 @@ const ApplicationForm = () => {
       <Navbar />
       <div className="pt-24 pb-16">
         <div className="container mx-auto px-6 max-w-3xl">
-          <div className="text-center mb-10">
-            <h1 className="text-3xl font-bold text-foreground mb-3">Apply for Internship</h1>
-            <p className="text-muted-foreground">Fill in your details to submit your application.</p>
+          <Link to="/pfe-book" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-6">
+            <ArrowLeft className="h-4 w-4" /> Back to PFE Book
+          </Link>
+
+          {loadingSubject ? (
+            <Skeleton className="h-16 w-full mb-6" />
+          ) : subject && (
+            <div className="bg-primary/5 border border-primary/20 rounded-xl p-4 mb-6">
+              <p className="text-xs font-mono text-primary font-semibold">{subject.subject_id}</p>
+              <p className="text-sm font-semibold text-foreground mt-1">{subject.title}</p>
+              <p className="text-xs text-muted-foreground">{subject.department} • {subject.site}</p>
+            </div>
+          )}
+
+          <div className="text-center mb-8">
+            <h1 className="text-3xl font-bold text-foreground mb-3">Apply for PFE Internship</h1>
+            <p className="text-muted-foreground">Fill in your details and upload your documents.</p>
           </div>
 
-          <form
-            onSubmit={(e) => { e.preventDefault(); setSubmitted(true); }}
-            className="bg-card rounded-xl border p-8 shadow-sm"
-          >
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <form onSubmit={handleSubmit} className="bg-card rounded-xl border p-8 shadow-sm space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-foreground mb-1.5">Full Name *</label>
-                <input required className="w-full px-4 py-2.5 rounded-lg border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" placeholder="Enter your full name" />
+                <input required value={form.fullName} onChange={e => setForm(f => ({ ...f, fullName: e.target.value }))} className="w-full px-4 py-2.5 rounded-lg border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" placeholder="Enter your full name" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-foreground mb-1.5">Email *</label>
-                <input required type="email" className="w-full px-4 py-2.5 rounded-lg border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" placeholder="your.email@university.tn" />
+                <input required type="email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} className="w-full px-4 py-2.5 rounded-lg border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" placeholder="your.email@university.tn" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-foreground mb-1.5">Phone *</label>
-                <input required type="tel" className="w-full px-4 py-2.5 rounded-lg border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" placeholder="+216 XX XXX XXX" />
+                <input required type="tel" value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} className="w-full px-4 py-2.5 rounded-lg border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" placeholder="+216 XX XXX XXX" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-foreground mb-1.5">University *</label>
-                <input required className="w-full px-4 py-2.5 rounded-lg border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" placeholder="ENSI, INSAT, ENIT..." />
+                <input required value={form.university} onChange={e => setForm(f => ({ ...f, university: e.target.value }))} className="w-full px-4 py-2.5 rounded-lg border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" placeholder="ENSI, INSAT, ENIT..." />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-1.5">Academic Level</label>
+                <select value={form.academicLevel} onChange={e => setForm(f => ({ ...f, academicLevel: e.target.value }))} className="w-full px-4 py-2.5 rounded-lg border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20">
+                  <option value="">Select level</option>
+                  <option value="Licence">Licence</option>
+                  <option value="Master">Master</option>
+                  <option value="Cycle d'Ingénieur">Cycle d'Ingénieur</option>
+                  <option value="Technicien Supérieur">Technicien Supérieur</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-1.5">Field of Study</label>
+                <input value={form.fieldOfStudy} onChange={e => setForm(f => ({ ...f, fieldOfStudy: e.target.value }))} className="w-full px-4 py-2.5 rounded-lg border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" placeholder="Computer Science, EE..." />
               </div>
             </div>
 
             {/* CV Upload */}
-            <div className="mt-6">
-              <label className="block text-sm font-medium text-foreground mb-1.5">CV (PDF) *</label>
-              <div
-                onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
-                onDragLeave={() => setDragOver(false)}
-                onDrop={(e) => { e.preventDefault(); setDragOver(false); }}
-                className={`border-2 border-dashed rounded-xl p-8 text-center transition-all cursor-pointer ${
-                  dragOver ? "border-primary bg-primary/5" : "border-border hover:border-primary/40"
-                }`}
-              >
-                <Upload className="h-8 w-8 mx-auto mb-3 text-muted-foreground" />
-                <p className="text-sm text-muted-foreground">Drag & drop your CV here, or <span className="text-primary font-medium">browse</span></p>
-                <p className="text-xs text-muted-foreground/60 mt-1">PDF format, max 5MB</p>
-                <input type="file" accept=".pdf" className="hidden" />
-              </div>
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-1.5">CV (PDF) * — Mandatory</label>
+              {cvFile ? (
+                <div className="flex items-center gap-3 p-3 rounded-lg border bg-success/5 border-success/20">
+                  <FileText className="h-5 w-5 text-success" />
+                  <span className="text-sm text-foreground flex-1 truncate">{cvFile.name}</span>
+                  <button type="button" onClick={() => setCvFile(null)} className="p-1 hover:bg-secondary rounded"><X className="h-4 w-4 text-muted-foreground" /></button>
+                </div>
+              ) : (
+                <div onClick={() => cvRef.current?.click()} className="border-2 border-dashed rounded-xl p-8 text-center transition-all cursor-pointer border-border hover:border-primary/40 hover:bg-primary/5">
+                  <Upload className="h-8 w-8 mx-auto mb-3 text-muted-foreground" />
+                  <p className="text-sm text-muted-foreground">Click to upload your CV</p>
+                  <p className="text-xs text-muted-foreground/60 mt-1">PDF format, max 5MB</p>
+                </div>
+              )}
+              <input ref={cvRef} type="file" accept=".pdf" className="hidden" onChange={e => e.target.files?.[0] && setCvFile(e.target.files[0])} />
             </div>
 
-            {/* Motivation */}
-            <div className="mt-6">
-              <label className="block text-sm font-medium text-foreground mb-1.5">Motivation Letter</label>
-              <textarea
-                rows={4}
-                className="w-full px-4 py-2.5 rounded-lg border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all resize-none"
-                placeholder="Tell us why you're interested in this internship..."
-              />
+            {/* Motivation Letter */}
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-1.5">Motivation Letter (PDF) — Optional</label>
+              {motivFile ? (
+                <div className="flex items-center gap-3 p-3 rounded-lg border bg-success/5 border-success/20">
+                  <FileText className="h-5 w-5 text-success" />
+                  <span className="text-sm text-foreground flex-1 truncate">{motivFile.name}</span>
+                  <button type="button" onClick={() => setMotivFile(null)} className="p-1 hover:bg-secondary rounded"><X className="h-4 w-4 text-muted-foreground" /></button>
+                </div>
+              ) : (
+                <div onClick={() => motivRef.current?.click()} className="border-2 border-dashed rounded-xl p-6 text-center transition-all cursor-pointer border-border hover:border-primary/40 hover:bg-primary/5">
+                  <Upload className="h-6 w-6 mx-auto mb-2 text-muted-foreground" />
+                  <p className="text-xs text-muted-foreground">Click to upload motivation letter (optional)</p>
+                </div>
+              )}
+              <input ref={motivRef} type="file" accept=".pdf" className="hidden" onChange={e => e.target.files?.[0] && setMotivFile(e.target.files[0])} />
             </div>
 
-            <button
-              type="submit"
-              className="mt-8 w-full py-3 bg-primary text-primary-foreground rounded-lg font-semibold flex items-center justify-center gap-2 hover:bg-primary/90 transition-all shadow-sm"
-            >
-              <Send className="h-4 w-4" /> Submit Application
+            {/* Agreement */}
+            <label className="flex items-start gap-3 cursor-pointer">
+              <input type="checkbox" checked={agreed} onChange={e => setAgreed(e.target.checked)} className="mt-1 rounded border-border" />
+              <span className="text-sm text-muted-foreground">I confirm that the information provided is accurate and I agree to LEONI's internship terms and conditions.</span>
+            </label>
+
+            <button type="submit" disabled={submitting} className="w-full py-3 bg-primary text-primary-foreground rounded-lg font-semibold flex items-center justify-center gap-2 hover:bg-primary/90 transition-all shadow-sm disabled:opacity-50">
+              {submitting ? "Submitting..." : <><Send className="h-4 w-4" /> Submit Application</>}
             </button>
           </form>
         </div>

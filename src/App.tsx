@@ -10,6 +10,7 @@ import ProtectedRoute from "@/components/layout/ProtectedRoute";
 import Home from "./pages/Home";
 import Auth from "./pages/Auth";
 import PFEBook from "./pages/PFEBook";
+import PFESubjectPage from "./pages/PFESubjectPage";
 import ApplicationForm from "./pages/ApplicationForm";
 import NotFound from "./pages/NotFound";
 
@@ -64,6 +65,7 @@ const App = () => (
             <Route path="/" element={<Home />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/pfe-book" element={<PFEBook />} />
+            <Route path="/pfe-book/:subjectId" element={<PFESubjectPage />} />
             <Route path="/apply/:subjectId" element={<ApplicationForm />} />
             <Route path="/apply/non-pfe" element={<NonPFEApplication />} />
 
