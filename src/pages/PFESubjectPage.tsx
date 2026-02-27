@@ -1,5 +1,5 @@
 import { useParams, Link } from "react-router-dom";
-import { MapPin, Building2, GraduationCap, Clock, Users, ArrowLeft, Send } from "lucide-react";
+import { MapPin, Building2, Clock, Users, ArrowLeft, Send } from "lucide-react";
 import { usePFESubjectById } from "@/hooks/usePFESubjects";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
@@ -66,12 +66,6 @@ const PFESubjectPage = () => {
                         <Building2 className="h-4 w-4 text-primary shrink-0" />
                         <span>{subject.department}</span>
                       </div>
-                      {subject.supervisor && (
-                        <div className="flex items-center gap-3 text-muted-foreground">
-                          <GraduationCap className="h-4 w-4 text-primary shrink-0" />
-                          <span>Supervisor: {subject.supervisor}</span>
-                        </div>
-                      )}
                       <div className="flex items-center gap-3 text-muted-foreground">
                         <Clock className="h-4 w-4 text-primary shrink-0" />
                         <span>Duration: {subject.duration}</span>

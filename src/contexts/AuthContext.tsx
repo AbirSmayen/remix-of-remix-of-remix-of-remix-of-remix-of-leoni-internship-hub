@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useCallback, ReactNode } from "react";
 
-export type UserRole = "rh" | "encadrant" | "stagiaire";
+export type UserRole = "rh" | "encadrant" | "stagiaire" | "director";
 
 export interface MockUser {
   id: string;
@@ -14,6 +14,7 @@ const mockUsers: Record<string, MockUser> = {
   "rh@leoni.com": { id: "u1", name: "Admin RH", email: "rh@leoni.com", role: "rh" },
   "encadrant@leoni.com": { id: "u2", name: "Mohamed Amine Ben Nasr", email: "encadrant@leoni.com", role: "encadrant" },
   "stagiaire@leoni.com": { id: "u3", name: "Smayen Abir", email: "stagiaire@leoni.com", role: "stagiaire" },
+  "director@leoni.com": { id: "u4", name: "Director LEONI", email: "director@leoni.com", role: "director" },
 };
 
 interface AuthContextType {
@@ -33,7 +34,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const login = useCallback(async (email: string, _password: string): Promise<{ success: boolean; error?: string }> => {
     const found = mockUsers[email.toLowerCase()];
-    if (!found) return { success: false, error: "Invalid credentials. Use rh@leoni.com, encadrant@leoni.com, or stagiaire@leoni.com" };
+    if (!found) return { success: false, error: "Invalid credentials. Use rh@leoni.com, encadrant@leoni.com, stagiaire@leoni.com, or director@leoni.com" };
     setUser(found);
     sessionStorage.setItem("leoni_user", JSON.stringify(found));
     return { success: true };

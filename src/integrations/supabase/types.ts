@@ -32,6 +32,7 @@ export type Database = {
           preferred_start_date: string | null
           status: string
           subject_id: string | null
+          tracking_number: string | null
           university: string
           updated_at: string
         }
@@ -52,6 +53,7 @@ export type Database = {
           preferred_start_date?: string | null
           status?: string
           subject_id?: string | null
+          tracking_number?: string | null
           university: string
           updated_at?: string
         }
@@ -72,6 +74,7 @@ export type Database = {
           preferred_start_date?: string | null
           status?: string
           subject_id?: string | null
+          tracking_number?: string | null
           university?: string
           updated_at?: string
         }
@@ -84,6 +87,213 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      interns: {
+        Row: {
+          id: string
+          application_id: string | null
+          subject_id: string | null
+          full_name: string
+          email: string
+          matricule: string | null
+          internship_type: string
+          department: string
+          site: string
+          supervisor: string | null
+          project_title: string | null
+          start_date: string | null
+          end_date: string | null
+          status: string
+          final_evaluation_score: number | null
+          presentation_score: number | null
+          voting_score: number | null
+          is_top10: boolean
+          recruitment_eligible: boolean
+          equipment_returned: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          application_id?: string | null
+          subject_id?: string | null
+          full_name: string
+          email: string
+          matricule?: string | null
+          internship_type?: string
+          department: string
+          site: string
+          supervisor?: string | null
+          project_title?: string | null
+          start_date?: string | null
+          end_date?: string | null
+          status?: string
+          final_evaluation_score?: number | null
+          presentation_score?: number | null
+          voting_score?: number | null
+          is_top10?: boolean
+          recruitment_eligible?: boolean
+          equipment_returned?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          application_id?: string | null
+          subject_id?: string | null
+          full_name?: string
+          email?: string
+          matricule?: string | null
+          internship_type?: string
+          department?: string
+          site?: string
+          supervisor?: string | null
+          project_title?: string | null
+          start_date?: string | null
+          end_date?: string | null
+          status?: string
+          final_evaluation_score?: number | null
+          presentation_score?: number | null
+          voting_score?: number | null
+          is_top10?: boolean
+          recruitment_eligible?: boolean
+          equipment_returned?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          { foreignKeyName: "interns_application_id_fkey", columns: ["application_id"], isOneToOne: false, referencedRelation: "applications", referencedColumns: ["id"] },
+          { foreignKeyName: "interns_subject_id_fkey", columns: ["subject_id"], isOneToOne: false, referencedRelation: "pfe_subjects", referencedColumns: ["id"] },
+        ]
+      }
+      presentations: {
+        Row: {
+          id: string
+          intern_id: string
+          summary_url: string | null
+          presentation_file_url: string | null
+          scheduled_at: string | null
+          status: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          intern_id: string
+          summary_url?: string | null
+          presentation_file_url?: string | null
+          scheduled_at?: string | null
+          status?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          intern_id?: string
+          summary_url?: string | null
+          presentation_file_url?: string | null
+          scheduled_at?: string | null
+          status?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [{ foreignKeyName: "presentations_intern_id_fkey", columns: ["intern_id"], isOneToOne: true, referencedRelation: "interns", referencedColumns: ["id"] }]
+      }
+      jury_evaluations: {
+        Row: {
+          id: string
+          intern_id: string
+          evaluator_email: string
+          technical_quality: number
+          innovation: number
+          impact: number
+          presentation_skills: number
+          business_value: number
+          comments: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          intern_id: string
+          evaluator_email: string
+          technical_quality: number
+          innovation: number
+          impact: number
+          presentation_skills: number
+          business_value: number
+          comments?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          intern_id?: string
+          evaluator_email?: string
+          technical_quality?: number
+          innovation?: number
+          impact?: number
+          presentation_skills?: number
+          business_value?: number
+          comments?: string | null
+          created_at?: string
+        }
+        Relationships: [{ foreignKeyName: "jury_evaluations_intern_id_fkey", columns: ["intern_id"], isOneToOne: false, referencedRelation: "interns", referencedColumns: ["id"] }]
+      }
+      votes: {
+        Row: {
+          id: string
+          intern_id: string
+          voter_id: string
+          score: number
+          is_anonymous: boolean
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          intern_id: string
+          voter_id: string
+          score: number
+          is_anonymous?: boolean
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          intern_id?: string
+          voter_id?: string
+          score?: number
+          is_anonymous?: boolean
+          created_at?: string
+        }
+        Relationships: [{ foreignKeyName: "votes_intern_id_fkey", columns: ["intern_id"], isOneToOne: false, referencedRelation: "interns", referencedColumns: ["id"] }]
+      }
+      activity_logs: {
+        Row: {
+          id: string
+          entity_type: string
+          entity_id: string
+          action: string
+          actor_email: string | null
+          metadata: Json
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          entity_type: string
+          entity_id: string
+          action: string
+          actor_email?: string | null
+          metadata?: Json
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          entity_type?: string
+          entity_id?: string
+          action?: string
+          actor_email?: string | null
+          metadata?: Json
+          created_at?: string
+        }
+        Relationships: []
       }
       pfe_subjects: {
         Row: {

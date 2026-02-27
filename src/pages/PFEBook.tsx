@@ -131,7 +131,6 @@ const PFEBook = () => {
                 <div className="space-y-2 text-xs text-muted-foreground mb-4">
                   <div className="flex items-center gap-2"><MapPin className="h-3.5 w-3.5 text-primary" /> {subject.site}</div>
                   <div className="flex items-center gap-2"><Building2 className="h-3.5 w-3.5" /> {subject.department}</div>
-                  {subject.supervisor && <div className="flex items-center gap-2"><GraduationCap className="h-3.5 w-3.5" /> {subject.supervisor}</div>}
                   {subject.duration && <div className="flex items-center gap-2"><Clock className="h-3.5 w-3.5" /> {subject.duration}</div>}
                   <div className="flex items-center gap-2"><Users className="h-3.5 w-3.5" /> {subject.max_interns} intern{subject.max_interns > 1 ? "s" : ""} needed</div>
                 </div>

@@ -3,8 +3,17 @@ import DashboardLayout from "@/components/layout/DashboardLayout";
 import StatusBadge from "@/components/ui/StatusBadge";
 import { mockWorkSubmissions } from "@/data/mockData";
 import { toast } from "sonner";
+import { useMockInterns } from "@/contexts/MockInternsContext";
 
 const EncadrantSubmissions = () => {
+  const { interns } = useMockInterns();
+
+  const getInternName = (internId: string) => {
+    const idNum = Number(internId);
+    const intern = interns.find((i) => i.id === idNum);
+    return intern?.name ?? "—";
+  };
+
   return (
     <DashboardLayout role="encadrant">
       <div className="mb-8">
@@ -21,6 +30,9 @@ const EncadrantSubmissions = () => {
                   <FileText className="h-5 w-5 text-primary" />
                   <div>
                     <h3 className="font-medium text-foreground text-sm">{sub.title}</h3>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      By: <span className="font-medium text-foreground">{getInternName(sub.internId)}</span>
+                    </p>
                     <p className="text-xs text-muted-foreground">{sub.date} • Version {sub.version} • {sub.file}</p>
                   </div>
                 </div>

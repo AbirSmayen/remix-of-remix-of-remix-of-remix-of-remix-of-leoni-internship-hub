@@ -11,6 +11,7 @@ const NonPFEApplication = () => {
   const submitMutation = useSubmitApplication();
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [trackingNumber, setTrackingNumber] = useState<string | null>(null);
   const [form, setForm] = useState({
     firstName: "", lastName: "", email: "", phone: "", dob: "", nationality: "Tunisian",
     university: "", level: "", fieldOfStudy: "",
@@ -31,7 +32,7 @@ const NonPFEApplication = () => {
       let motivUrl: string | undefined;
       if (motivFile) motivUrl = await uploadApplicationFile(motivFile, "motivation-letters");
 
-      await submitMutation.mutateAsync({
+      const result = await submitMutation.mutateAsync({
         full_name: `${form.firstName} ${form.lastName}`.trim(),
         email: form.email,
         phone: form.phone,
@@ -46,6 +47,7 @@ const NonPFEApplication = () => {
         motivation_letter_url: motivUrl || null,
         agreed_terms: true,
       });
+      setTrackingNumber((result as { tracking_number?: string | null })?.tracking_number ?? null);
       setSubmitted(true);
     } catch (err: any) {
       toast.error(err.message || "Failed to submit application.");
@@ -65,7 +67,13 @@ const NonPFEApplication = () => {
             </div>
             <h2 className="text-2xl font-bold text-foreground mb-2">Application Submitted!</h2>
             <p className="text-muted-foreground mb-2">Your application has entered the review pipeline.</p>
+            {trackingNumber && (
+              <p className="text-sm font-mono font-semibold text-primary bg-primary/10 px-4 py-2 rounded-lg inline-block mb-3">
+                Tracking number: {trackingNumber}
+              </p>
+            )}
             <p className="text-sm text-muted-foreground">Pipeline: <span className="font-semibold text-foreground">Candidate → RH Review → Interview → Acceptance</span></p>
+            <p className="text-xs text-muted-foreground mt-2">Save your tracking number to check status later.</p>
           </div>
         </div>
         <Footer />

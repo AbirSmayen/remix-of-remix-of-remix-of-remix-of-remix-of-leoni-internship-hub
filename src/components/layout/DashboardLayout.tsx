@@ -2,8 +2,8 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import {
   LayoutDashboard, BookOpen, Users, Settings, ChevronLeft, ChevronRight, LogOut,
-  GraduationCap, ClipboardList, BarChart3, MessageSquare, Award, Calendar, Bell, FileText, Briefcase, CreditCard, User,
-  CheckCircle, Package, Trophy
+  GraduationCap, ClipboardList, BarChart3, MessageSquare, Award, Calendar, Bell, FileText, CreditCard, User,
+  CheckCircle, Trophy, Archive, Target, Presentation, Shield
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import NotificationBell from "@/components/NotificationBell";
@@ -13,26 +13,26 @@ import { useTranslation } from "react-i18next";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
-  role: "rh" | "encadrant" | "stagiaire";
+  role: "rh" | "encadrant" | "stagiaire" | "director";
 }
 
 const menuItems = (t: (key: string) => string) => ({
   rh: [
     { icon: LayoutDashboard, label: t("sidebar.rh.dashboard"), to: "/dashboard/rh" },
     { icon: BookOpen, label: t("sidebar.rh.pfeBook"), to: "/dashboard/rh/pfe-book" },
-    { icon: Briefcase, label: t("sidebar.rh.internships"), to: "/dashboard/rh/internships" },
     { icon: ClipboardList, label: t("sidebar.rh.applications"), to: "/dashboard/rh/applications" },
+    { icon: ClipboardList, label: "Short-Term Applications", to: "/dashboard/rh/short-term-applications" },
     { icon: Users, label: t("sidebar.rh.interns"), to: "/dashboard/rh/interns" },
     { icon: Calendar, label: t("sidebar.rh.events"), to: "/dashboard/rh/events" },
     { icon: BarChart3, label: t("sidebar.rh.statistics"), to: "/dashboard/rh/statistics" },
-    { icon: CheckCircle, label: t("sidebar.rh.validation"), to: "/dashboard/rh/validation" },
-    { icon: Package, label: t("sidebar.rh.equipment"), to: "/dashboard/rh/equipment" },
-    { icon: Trophy, label: "Voting & TOP 10", to: "/dashboard/rh/voting" },
+    { icon: Trophy, label: "Best Projects", to: "/dashboard/rh/voting" },
+    { icon: Archive, label: "Alumni Archive", to: "/dashboard/rh/alumni" },
     { icon: Settings, label: t("sidebar.rh.settings"), to: "/dashboard/rh/settings" },
   ],
   encadrant: [
     { icon: LayoutDashboard, label: t("sidebar.enc.dashboard"), to: "/dashboard/encadrant" },
     { icon: Users, label: t("sidebar.enc.myInterns"), to: "/dashboard/encadrant/interns" },
+    { icon: Shield, label: "Authorizations", to: "/dashboard/encadrant/authorizations" },
     { icon: FileText, label: t("sidebar.enc.submissions"), to: "/dashboard/encadrant/submissions" },
     { icon: BarChart3, label: t("sidebar.enc.progress"), to: "/dashboard/encadrant/progress" },
     { icon: MessageSquare, label: t("sidebar.enc.evaluations"), to: "/dashboard/encadrant/evaluations" },
@@ -44,11 +44,13 @@ const menuItems = (t: (key: string) => string) => ({
     { icon: GraduationCap, label: t("sidebar.stg.myInternship"), to: "/dashboard/stagiaire/internship" },
     { icon: FileText, label: t("sidebar.stg.mySubmissions"), to: "/dashboard/stagiaire/submissions" },
     { icon: BarChart3, label: t("sidebar.stg.progress"), to: "/dashboard/stagiaire/progress" },
-    { icon: MessageSquare, label: t("sidebar.stg.feedback"), to: "/dashboard/stagiaire/feedback" },
     { icon: Calendar, label: t("sidebar.stg.events"), to: "/dashboard/stagiaire/events" },
     { icon: CreditCard, label: t("sidebar.stg.myBadge"), to: "/dashboard/stagiaire/badge" },
     { icon: Award, label: t("sidebar.stg.certificate"), to: "/dashboard/stagiaire/certificate" },
     { icon: User, label: t("sidebar.stg.profile"), to: "/dashboard/stagiaire/profile" },
+  ],
+  director: [
+    { icon: Trophy, label: "Top Projects Voting", to: "/dashboard/director/voting" },
   ],
 });
 
@@ -58,12 +60,14 @@ const DashboardLayout = ({ children, role }: DashboardLayoutProps) => {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const { t } = useTranslation();
-  const items = menuItems(t)[role];
+  const menuRole = role;
+  const items = menuItems(t)[menuRole];
 
   const roleLabels: Record<string, string> = {
     rh: t("sidebar.rhManager"),
     encadrant: t("sidebar.encadrant"),
     stagiaire: t("sidebar.stagiaire"),
+    director: "Director",
   };
 
   const handleLogout = () => {
@@ -74,7 +78,15 @@ const DashboardLayout = ({ children, role }: DashboardLayoutProps) => {
   return (
     <div className="min-h-screen flex w-full bg-background">
       {/* Sidebar */}
-      <aside className={`fixed left-0 top-0 h-screen bg-sidebar text-sidebar-foreground flex flex-col transition-all duration-300 z-40 ${collapsed ? "w-16" : "w-64"}`}>
+      <aside
+        className={`fixed left-0 top-0 h-screen text-sidebar-foreground flex flex-col transition-all duration-300 z-40 ${
+          collapsed ? "w-16" : "w-64"
+        }`}
+        style={{
+          background:
+            "linear-gradient(180deg, hsl(var(--sidebar-background)) 0%, hsl(var(--leoni-dark)) 100%)",
+        }}
+      >
         {/* Logo */}
         <div className="h-16 flex items-center justify-between px-4 border-b border-sidebar-border">
           {!collapsed && (
@@ -96,14 +108,23 @@ const DashboardLayout = ({ children, role }: DashboardLayoutProps) => {
               <Link
                 key={item.to}
                 to={item.to}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
+                className={`relative group flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
                   isActive
-                    ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-sm"
-                    : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"
+                    ? "bg-sidebar-primary/20 text-sidebar-foreground shadow-[0_10px_24px_-18px_rgba(56,189,248,0.55)]"
+                    : "text-sidebar-foreground/70 hover:bg-sidebar-accent/70 hover:text-sidebar-foreground"
                 }`}
                 title={collapsed ? item.label : undefined}
               >
-                <item.icon className="h-5 w-5 shrink-0" />
+                <span
+                  className={`absolute left-1 top-1/2 -translate-y-1/2 h-7 w-1 rounded-full transition-all ${
+                    isActive ? "bg-sidebar-primary" : "bg-transparent group-hover:bg-sidebar-primary/40"
+                  }`}
+                />
+                <item.icon
+                  className={`h-5 w-5 shrink-0 transition-colors ${
+                    isActive ? "text-sidebar-primary" : "text-sidebar-foreground/60 group-hover:text-sidebar-primary"
+                  }`}
+                />
                 {!collapsed && <span>{item.label}</span>}
               </Link>
             );
@@ -139,7 +160,7 @@ const DashboardLayout = ({ children, role }: DashboardLayoutProps) => {
           </div>
         </header>
 
-        <div className="p-6">{children}</div>
+        <div className="p-7 lg:p-8 animate-fade-in">{children}</div>
       </main>
     </div>
   );

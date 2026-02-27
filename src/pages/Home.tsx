@@ -60,6 +60,31 @@ const Home = () => {
         </div>
       </section>
 
+      {/* About */}
+      <section id="about" className="py-24 bg-background scroll-mt-24">
+        <div className="container mx-auto px-6">
+          <div className="max-w-3xl">
+            <h2 className="text-3xl font-bold text-foreground mb-4">{t("nav.about")}</h2>
+            <p className="text-muted-foreground leading-relaxed">
+              LEONI is a global provider of products, solutions and services for energy and data management in the automotive industry.
+              This platform streamlines internship lifecycle management—from applications to evaluation and best projects selection.
+            </p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-10">
+            {[
+              { label: "Internship tracking", value: "End-to-end" },
+              { label: "Evaluation flow", value: "Structured" },
+              { label: "Best projects", value: "Transparent" },
+            ].map((s) => (
+              <div key={s.label} className="bg-card rounded-xl border shadow-sm p-6">
+                <p className="text-xs text-muted-foreground">{s.label}</p>
+                <p className="text-xl font-bold text-foreground mt-2">{s.value}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* Features */}
       <section className="py-24 bg-card" id="features">
         <div className="container mx-auto px-6">
@@ -87,6 +112,41 @@ const Home = () => {
           <Link to="/auth" className="inline-flex items-center gap-2 px-8 py-3.5 bg-card text-foreground rounded-xl font-semibold hover:bg-secondary transition-all">
             {t("nav.signIn")} <ArrowRight className="h-4 w-4" />
           </Link>
+        </div>
+      </section>
+
+      {/* Contact */}
+      <section id="contact" className="py-24 bg-card scroll-mt-24">
+        <div className="container mx-auto px-6">
+          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-10">
+            <div>
+              <h2 className="text-3xl font-bold text-foreground mb-2">{t("nav.contact")}</h2>
+              <p className="text-muted-foreground">
+                Get in touch with the HR team for internship inquiries and support.
+              </p>
+            </div>
+            <Link
+              to="/auth"
+              className="inline-flex items-center justify-center px-6 py-3 bg-primary text-primary-foreground rounded-xl font-semibold hover:bg-primary/90 transition-all"
+            >
+              {t("nav.signIn")}
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="bg-background rounded-xl border p-6">
+              <p className="text-xs text-muted-foreground">Email</p>
+              <p className="text-sm font-semibold text-foreground mt-2">internships@leoni.com</p>
+            </div>
+            <div className="bg-background rounded-xl border p-6">
+              <p className="text-xs text-muted-foreground">Phone</p>
+              <p className="text-sm font-semibold text-foreground mt-2">+216 70 000 000</p>
+            </div>
+            <div className="bg-background rounded-xl border p-6">
+              <p className="text-xs text-muted-foreground">Office</p>
+              <p className="text-sm font-semibold text-foreground mt-2">LEONI Tunisia</p>
+            </div>
+          </div>
         </div>
       </section>
 

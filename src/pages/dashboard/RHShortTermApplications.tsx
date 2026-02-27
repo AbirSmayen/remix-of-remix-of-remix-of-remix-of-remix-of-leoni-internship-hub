@@ -3,83 +3,68 @@ import DashboardLayout from "@/components/layout/DashboardLayout";
 import { useState } from "react";
 import { CvButton, FilterSelect, StatusPill } from "@/components/rh/applications/ApplicationComponents";
 
-const RHApplications = () => {
+const RHShortTermApplications = () => {
   const [siteFilter, setSiteFilter] = useState("all");
+  const [typeFilter, setTypeFilter] = useState("all");
   const [departmentFilter, setDepartmentFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [minAi70, setMinAi70] = useState(false);
   const [search, setSearch] = useState("");
 
-  const mockPfeApplications = [
+  const mockShortTermApplications = [
     {
-      id: "pfe-1",
-      fullName: "Ahmed Ben Salem",
-      email: "ahmed.bensalem@ensi.tn",
-      phone: "+216 98 765 432",
-      university: "ENSI",
-      academicLevel: "Cycle d'Ingénieur",
-      projectTitle: "AI Predictive Maintenance System",
+      id: "st-1",
+      fullName: "Khalil Jaziri",
+      email: "khalil.jaziri@esprit.tn",
+      phone: "+216 50 987 654",
       site: "Sousse Messadine",
-      department: "Engineering",
-      aiMatchingScore: 92,
-      cvUrl: "/mock/cv/ahmed-ben-salem.pdf",
-      status: "Pending" as const,
-    },
-    {
-      id: "pfe-2",
-      fullName: "Sarra Trabelsi",
-      email: "sarra.trabelsi@insat.tn",
-      phone: "+216 55 123 456",
-      university: "INSAT",
-      academicLevel: "Cycle d'Ingénieur",
-      projectTitle: "Supply Chain Optimization Platform",
-      site: "Mateur South",
-      department: "Logistics",
-      aiMatchingScore: 88,
-      cvUrl: "/mock/cv/sarra-trabelsi.pdf",
-      status: "Interview" as const,
-    },
-    {
-      id: "pfe-3",
-      fullName: "Yasmine Kallel",
-      email: "yasmine.kallel@enit.tn",
-      phone: "+216 22 456 789",
-      university: "ENIT",
-      academicLevel: "Master",
-      projectTitle: "Smart Inventory Tracking System",
-      site: "Sidi Bouali",
-      department: "Production",
-      aiMatchingScore: 85,
-      cvUrl: "/mock/cv/yasmine-kallel.pdf",
-      status: "Accepted" as const,
-    },
-    {
-      id: "pfe-4",
-      fullName: "Mohamed Gharbi",
-      email: "mohamed.gharbi@esprit.tn",
-      phone: "+216 99 321 654",
-      university: "ESPRIT",
-      academicLevel: "Cycle d'Ingénieur",
-      projectTitle: "ERP Automation Tool",
-      site: "Mateur North",
       department: "IT",
-      aiMatchingScore: 73,
-      cvUrl: "/mock/cv/mohamed-gharbi.pdf",
+      type: "Summer Internship" as const,
       status: "Pending" as const,
+      cvUrl: "/mock/cv/khalil-jaziri.pdf",
     },
     {
-      id: "pfe-5",
-      fullName: "Amira Bouaziz",
-      email: "amira.bouaziz@supcom.tn",
-      phone: "+216 23 654 321",
-      university: "SUP'COM",
-      academicLevel: "Cycle d'Ingénieur",
-      projectTitle: "Digital Twin for Wiring Harness",
-      site: "Menzel Hayet",
+      id: "st-2",
+      fullName: "Ines Bouazizi",
+      email: "ines.bouazizi@isi.tn",
+      phone: "+216 21 222 333",
+      site: "Mateur South",
       department: "Engineering",
-      aiMatchingScore: 64,
-      cvUrl: "/mock/cv/amira-bouaziz.pdf",
+      type: "Observation Internship" as const,
+      status: "Interview" as const,
+      cvUrl: "/mock/cv/ines-bouazizi.pdf",
+    },
+    {
+      id: "st-3",
+      fullName: "Amine Riahi",
+      email: "amine.riahi@enit.tn",
+      phone: "+216 27 444 555",
+      site: "Menzel Hayet",
+      department: "Production",
+      type: "1-Month Internship" as const,
+      status: "Accepted" as const,
+      cvUrl: "/mock/cv/amine-riahi.pdf",
+    },
+    {
+      id: "st-4",
+      fullName: "Fatma Kacem",
+      email: "fatma.kacem@insat.tn",
+      phone: "+216 29 111 222",
+      site: "Sidi Bouali",
+      department: "Logistics",
+      type: "Summer Internship" as const,
       status: "Rejected" as const,
+      cvUrl: "/mock/cv/fatma-kacem.pdf",
+    },
+    {
+      id: "st-5",
+      fullName: "Skander Ben Salah",
+      email: "skander.bensalah@supcom.tn",
+      phone: "+216 24 333 444",
+      site: "Mateur North",
+      department: "HR",
+      type: "Observation Internship" as const,
+      status: "Pending" as const,
+      cvUrl: "/mock/cv/skander-ben-salah.pdf",
     },
   ];
 
@@ -91,13 +76,14 @@ const RHApplications = () => {
     "Sidi Bouali",
   ];
   const departmentOptions = ["Engineering", "Logistics", "Production", "IT", "HR"];
+  const typeOptions = ["Summer Internship", "Observation Internship", "1-Month Internship"];
   const statusOptions = ["Pending", "Interview", "Accepted", "Rejected"];
 
-  const filtered = mockPfeApplications.filter((a) => {
+  const filtered = mockShortTermApplications.filter((a) => {
     if (siteFilter !== "all" && a.site !== siteFilter) return false;
+    if (typeFilter !== "all" && a.type !== typeFilter) return false;
     if (departmentFilter !== "all" && a.department !== departmentFilter) return false;
     if (statusFilter !== "all" && a.status !== statusFilter) return false;
-    if (minAi70 && a.aiMatchingScore < 70) return false;
     if (search) {
       const q = search.toLowerCase();
       if (!a.fullName.toLowerCase().includes(q) && !a.email.toLowerCase().includes(q)) return false;
@@ -109,9 +95,11 @@ const RHApplications = () => {
     <DashboardLayout role="rh">
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-          <ClipboardList className="h-6 w-6 text-primary" /> Applications (PFE)
+          <ClipboardList className="h-6 w-6 text-primary" /> Short-Term Applications
         </h1>
-        <p className="text-muted-foreground text-sm mt-1">Review and manage PFE applications only.</p>
+        <p className="text-muted-foreground text-sm mt-1">
+          Review Summer, Observation, and 1-Month internship applications.
+        </p>
       </div>
 
       <div className="flex flex-col md:flex-row gap-3 mb-6">
@@ -124,19 +112,11 @@ const RHApplications = () => {
             placeholder="Search candidates..."
           />
         </div>
-        <div className="flex gap-2 flex-wrap items-center">
+        <div className="flex gap-2 flex-wrap">
           <FilterSelect value={siteFilter} onChange={setSiteFilter} placeholder="All Sites" options={siteOptions} />
+          <FilterSelect value={typeFilter} onChange={setTypeFilter} placeholder="All Types" options={typeOptions} />
           <FilterSelect value={departmentFilter} onChange={setDepartmentFilter} placeholder="All Departments" options={departmentOptions} />
           <FilterSelect value={statusFilter} onChange={setStatusFilter} placeholder="All Status" options={statusOptions} />
-          <label className="inline-flex items-center gap-2 px-3 py-2.5 rounded-xl border bg-card text-sm select-none">
-            <input
-              type="checkbox"
-              checked={minAi70}
-              onChange={(e) => setMinAi70(e.target.checked)}
-              className="h-4 w-4 accent-primary"
-            />
-            AI ≥ 70%
-          </label>
         </div>
       </div>
 
@@ -146,12 +126,9 @@ const RHApplications = () => {
             <thead>
               <tr className="border-b bg-secondary/50">
                 <th className="text-left px-6 py-3 text-xs font-medium text-muted-foreground uppercase">Candidate</th>
-                <th className="text-left px-6 py-3 text-xs font-medium text-muted-foreground uppercase">University</th>
-                <th className="text-left px-6 py-3 text-xs font-medium text-muted-foreground uppercase">Academic Level</th>
-                <th className="text-left px-6 py-3 text-xs font-medium text-muted-foreground uppercase">Applied Project</th>
+                <th className="text-left px-6 py-3 text-xs font-medium text-muted-foreground uppercase">Type</th>
                 <th className="text-left px-6 py-3 text-xs font-medium text-muted-foreground uppercase">Site</th>
                 <th className="text-left px-6 py-3 text-xs font-medium text-muted-foreground uppercase">Department</th>
-                <th className="text-left px-6 py-3 text-xs font-medium text-muted-foreground uppercase">AI Score</th>
                 <th className="text-left px-6 py-3 text-xs font-medium text-muted-foreground uppercase">Status</th>
                 <th className="text-left px-6 py-3 text-xs font-medium text-muted-foreground uppercase">CV</th>
               </tr>
@@ -167,13 +144,7 @@ const RHApplications = () => {
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <span className="text-sm text-muted-foreground">{app.university}</span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className="text-sm text-muted-foreground">{app.academicLevel}</span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <p className="text-sm text-foreground font-medium">{app.projectTitle}</p>
+                    <span className="text-sm text-muted-foreground">{app.type}</span>
                   </td>
                   <td className="px-6 py-4">
                     <span className="text-sm text-muted-foreground">{app.site}</span>
@@ -182,13 +153,10 @@ const RHApplications = () => {
                     <span className="text-sm text-muted-foreground">{app.department}</span>
                   </td>
                   <td className="px-6 py-4">
-                    <span className="text-sm font-semibold text-primary">{app.aiMatchingScore}%</span>
-                  </td>
-                  <td className="px-6 py-4">
                     <StatusPill status={app.status} />
                   </td>
                   <td className="px-6 py-4">
-                    <CvButton href={app.cvUrl} label="View CV" />
+                    <CvButton href={app.cvUrl} label="CV" />
                   </td>
                 </tr>
               ))}
@@ -196,11 +164,14 @@ const RHApplications = () => {
           </table>
         </div>
         {filtered.length === 0 && (
-          <div className="p-12 text-center text-muted-foreground text-sm">No applications found.</div>
+          <div className="p-12 text-center text-muted-foreground text-sm">
+            No short-term applications found.
+          </div>
         )}
       </div>
     </DashboardLayout>
   );
 };
 
-export default RHApplications;
+export default RHShortTermApplications;
+

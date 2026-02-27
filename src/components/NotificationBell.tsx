@@ -20,7 +20,7 @@ const NotificationBell = () => {
   return (
     <div className="relative">
       <button onClick={() => setOpen(!open)} className="relative p-2 rounded-lg hover:bg-secondary transition-colors">
-        <Bell className="h-5 w-5 text-muted-foreground" />
+        <Bell className={`h-5 w-5 text-muted-foreground ${unreadCount > 0 ? "animate-soft-pulse" : ""}`} />
         {unreadCount > 0 && (
           <span className="absolute -top-0.5 -right-0.5 h-5 w-5 rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold flex items-center justify-center">{unreadCount}</span>
         )}

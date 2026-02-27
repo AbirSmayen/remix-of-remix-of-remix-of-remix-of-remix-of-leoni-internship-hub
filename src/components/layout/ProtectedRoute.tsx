@@ -18,6 +18,7 @@ const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
       rh: "/dashboard/rh",
       encadrant: "/dashboard/encadrant",
       stagiaire: "/dashboard/stagiaire",
+      director: "/dashboard/encadrant",
     };
     return <Navigate to={roleRoutes[user.role]} replace />;
   }

@@ -123,76 +123,20 @@ const generateAuthorizations = (): Authorization[] =>
   });
 
 const RHEquipment = () => {
-  const [authorizations, setAuthorizations] = useState<Authorization[]>(generateAuthorizations);
-  const [selectedAuth, setSelectedAuth] = useState<Authorization | null>(null);
-  const [showPanel, setShowPanel] = useState(false);
-  const [customItem, setCustomItem] = useState("");
-  const [customType, setCustomType] = useState<EquipmentItem["type"]>("hardware");
-  const [rhComment, setRhComment] = useState("");
-
+  const [authorizations] = useState<Authorization[]>(generateAuthorizations);
   const approved = authorizations.filter(a => a.status === "approved").length;
   const pending = authorizations.filter(a => a.status === "pending").length;
   const totalItems = authorizations.reduce((s, a) => s + a.items.length, 0);
   const approvedItems = authorizations.reduce((s, a) => s + a.items.filter(i => i.approved).length, 0);
 
-  const openPanel = (auth: Authorization) => {
-    setSelectedAuth({ ...auth, items: auth.items.map(i => ({ ...i })) });
-    setRhComment(auth.rhComment || "");
-    setShowPanel(true);
-  };
-
-  const toggleItem = (itemId: string) => {
-    if (!selectedAuth) return;
-    setSelectedAuth({
-      ...selectedAuth,
-      items: selectedAuth.items.map(i =>
-        i.id === itemId ? { ...i, approved: !i.approved } : i
-      ),
-    });
-  };
-
-  const addCustomItem = () => {
-    if (!customItem.trim() || !selectedAuth) return;
-    const newItem: EquipmentItem = {
-      id: `custom-${Date.now()}`,
-      name: customItem,
-      type: customType,
-      approved: true,
-    };
-    setSelectedAuth({ ...selectedAuth, items: [...selectedAuth.items, newItem] });
-    setCustomItem("");
-  };
-
-  const saveAuthorization = () => {
-    if (!selectedAuth) return;
-    const allApproved = selectedAuth.items.every(i => i.approved);
-    const someApproved = selectedAuth.items.some(i => i.approved);
-    const status = allApproved ? "approved" : someApproved ? "partial" : "pending";
-    const now = new Date().toISOString().split("T")[0];
-
-    setAuthorizations(prev => prev.map(a =>
-      a.id === selectedAuth.id
-        ? {
-            ...selectedAuth,
-            status,
-            rhComment: rhComment || undefined,
-            items: selectedAuth.items.map(i => ({
-              ...i,
-              approvedDate: i.approved ? (i.approvedDate || now) : undefined,
-            })),
-          }
-        : a
-    ));
-    toast.success(`Authorization ${status === "approved" ? "fully approved" : "updated"} for ${selectedAuth.internName}`);
-    setShowPanel(false);
-  };
-
   return (
     <DashboardLayout role="rh">
       <div className="space-y-8">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Equipment & Authorization Management</h1>
-          <p className="text-muted-foreground text-sm mt-1">Manage intern equipment authorizations, assignments, and returns.</p>
+          <h1 className="text-2xl font-bold text-foreground">Equipment & Authorization Overview</h1>
+          <p className="text-muted-foreground text-sm mt-1">
+            Read-only view of equipment, PC access, and resources validated by supervisors for accepted interns.
+          </p>
         </div>
 
         {/* KPIs */}
@@ -216,8 +160,10 @@ const RHEquipment = () => {
           <div className="bg-warning/5 border border-warning/20 rounded-xl p-4 flex items-center gap-3">
             <AlertTriangle className="h-5 w-5 text-warning shrink-0" />
             <div>
-              <p className="text-sm font-semibold text-foreground">{pending} new intern account(s) require authorization</p>
-              <p className="text-xs text-muted-foreground">Equipment authorization must be completed before internship becomes "Active".</p>
+              <p className="text-sm font-semibold text-foreground">{pending} intern account(s) without full authorization</p>
+              <p className="text-xs text-muted-foreground">
+                Supervisors are responsible for completing equipment and access authorizations. RH has visibility only.
+              </p>
             </div>
           </div>
         )}
@@ -225,8 +171,11 @@ const RHEquipment = () => {
         {/* Authorization Table */}
         <div className="bg-card rounded-xl border shadow-sm">
           <div className="p-6 border-b">
-            <h2 className="text-lg font-semibold text-foreground">Intern Authorization Panel</h2>
-            <p className="text-sm text-muted-foreground">Review and approve equipment based on department and internship type. Smart suggestions are pre-filled.</p>
+            <h2 className="text-lg font-semibold text-foreground">Intern Authorizations (Supervisor-Owned)</h2>
+            <p className="text-sm text-muted-foreground">
+              RH can monitor which equipment and accesses have been granted. All changes are performed by supervisors in
+              their own authorization panel.
+            </p>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full">
@@ -266,10 +215,8 @@ const RHEquipment = () => {
                     <td className="px-6 py-4">
                       <StatusBadge status={auth.status === "approved" ? "approved" : auth.status === "partial" ? "needs_revision" : "pending"} />
                     </td>
-                    <td className="px-6 py-4 text-right">
-                      <Button variant="outline" size="sm" onClick={() => openPanel(auth)} className="gap-1.5 text-xs">
-                        <Eye className="h-3.5 w-3.5" /> Review
-                      </Button>
+                    <td className="px-6 py-4 text-right text-xs text-muted-foreground">
+                      Supervisor-managed
                     </td>
                   </tr>
                 ))}
@@ -278,91 +225,6 @@ const RHEquipment = () => {
           </div>
         </div>
       </div>
-
-      {/* Authorization Detail Panel */}
-      <Dialog open={showPanel} onOpenChange={setShowPanel}>
-        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Authorization — {selectedAuth?.internName}</DialogTitle>
-            <DialogDescription>
-              {selectedAuth?.department} • {selectedAuth?.internshipType} • {selectedAuth?.site}<br />
-              <span className="text-xs">Period: {selectedAuth?.startDate} → {selectedAuth?.endDate} • Supervisor: {selectedAuth?.supervisor}</span>
-            </DialogDescription>
-          </DialogHeader>
-
-          {selectedAuth && (
-            <div className="space-y-5 py-2">
-              {/* Smart suggestions info */}
-              <div className="bg-primary/5 border border-primary/20 rounded-lg p-3 text-xs text-primary">
-                <strong>Smart Suggestions:</strong> Equipment pre-filled based on {selectedAuth.department} department and {selectedAuth.internshipType} internship type.
-              </div>
-
-              {/* Equipment Checklist */}
-              <div className="space-y-2">
-                {selectedAuth.items.map(item => (
-                  <label key={item.id} className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all ${
-                    item.approved ? "bg-success/5 border-success/30" : "hover:bg-secondary/50"
-                  }`}>
-                    <input
-                      type="checkbox"
-                      checked={item.approved}
-                      onChange={() => toggleItem(item.id)}
-                      className="h-4 w-4 rounded border-border text-primary"
-                    />
-                    <span className="p-1.5 rounded-md bg-secondary text-muted-foreground">{typeIcons[item.type]}</span>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-foreground">{item.name}</p>
-                      <p className="text-xs text-muted-foreground">{typeLabels[item.type]}</p>
-                    </div>
-                    {item.approved && item.approvedDate && (
-                      <span className="text-[10px] text-success font-medium">{item.approvedDate}</span>
-                    )}
-                  </label>
-                ))}
-              </div>
-
-              {/* Add custom item */}
-              <div className="flex gap-2">
-                <select
-                  value={customType}
-                  onChange={e => setCustomType(e.target.value as EquipmentItem["type"])}
-                  className="px-3 py-2 rounded-lg border bg-background text-sm w-40"
-                >
-                  {Object.entries(typeLabels).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-                </select>
-                <input
-                  value={customItem}
-                  onChange={e => setCustomItem(e.target.value)}
-                  placeholder="Add custom equipment..."
-                  className="flex-1 px-3 py-2 rounded-lg border bg-background text-sm"
-                />
-                <Button variant="outline" size="sm" onClick={addCustomItem} className="gap-1.5">
-                  <Plus className="h-3.5 w-3.5" /> Add
-                </Button>
-              </div>
-
-              {/* RH Comment */}
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-1.5">RH Comment</label>
-                <textarea
-                  rows={2}
-                  value={rhComment}
-                  onChange={e => setRhComment(e.target.value)}
-                  className="w-full px-3 py-2.5 rounded-lg border bg-background text-sm resize-none"
-                  placeholder="Optional comment..."
-                />
-              </div>
-            </div>
-          )}
-
-          <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setShowPanel(false)}>Cancel</Button>
-            <Button onClick={saveAuthorization} className="gap-2">
-              <Shield className="h-4 w-4" /> Save Authorization
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </DashboardLayout>
   );
 };

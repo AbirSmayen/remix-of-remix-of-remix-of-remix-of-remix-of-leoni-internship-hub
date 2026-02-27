@@ -112,6 +112,11 @@
     @apply border-border;
   }
 
+  html {
+    scroll-behavior: smooth;
+    scroll-padding-top: 4rem; /* fixed navbar offset */
+  }
+
   body {
     @apply bg-background text-foreground;
     font-family: 'Poppins', sans-serif;
@@ -123,12 +128,52 @@
     @apply transition-transform duration-200 hover:scale-[1.02];
   }
 
+  .card-elevated {
+    @apply bg-card border shadow-[0_10px_30px_-18px_rgba(15,23,42,0.35)] rounded-2xl;
+  }
+
+  .card-elevated-hover {
+    @apply transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_18px_45px_-28px_rgba(15,23,42,0.45)];
+  }
+
+  .kpi-card {
+    @apply card-elevated card-elevated-hover relative overflow-hidden p-6;
+  }
+
+  .kpi-card-bg {
+    @apply absolute inset-0 opacity-100;
+    background:
+      radial-gradient(900px circle at 0% 0%, hsl(var(--primary) / 0.16), transparent 45%),
+      radial-gradient(700px circle at 100% 10%, hsl(var(--leoni-purple) / 0.10), transparent 40%),
+      linear-gradient(180deg, hsl(var(--card)) 0%, hsl(var(--background)) 140%);
+  }
+
+  .table-card {
+    @apply card-elevated overflow-hidden;
+  }
+
+  .table-header-sticky {
+    @apply sticky top-0 z-10 backdrop-blur bg-card/90;
+  }
+
+  .table-row-hover {
+    @apply hover:bg-secondary/35 transition-colors;
+  }
+
+  .table-row-zebra:nth-child(even) {
+    @apply bg-secondary/15;
+  }
+
   .animate-fade-in {
     animation: fade-in 0.4s ease-out;
   }
 
   .animate-slide-up {
     animation: slide-up 0.5s ease-out;
+  }
+
+  .animate-soft-pulse {
+    animation: soft-pulse 2.4s ease-in-out infinite;
   }
 }
 
@@ -140,6 +185,11 @@
 @keyframes slide-up {
   from { opacity: 0; transform: translateY(20px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes soft-pulse {
+  0%, 100% { transform: scale(1); filter: drop-shadow(0 0 0 rgba(0,0,0,0)); }
+  50% { transform: scale(1.04); filter: drop-shadow(0 10px 18px rgba(56,189,248,0.18)); }
 }
 
 @keyframes count-up {

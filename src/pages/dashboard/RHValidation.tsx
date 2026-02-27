@@ -1,10 +1,9 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { CheckCircle, Upload, AlertTriangle, FileCheck, Server, ClipboardCheck, Shield } from "lucide-react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
-import { mockInterns } from "@/data/mockData";
+import { useActiveInterns, usePendingPresentationInterns, useUpdateIntern, INTERN_STATUS } from "@/hooks/useInterns";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import StatusBadge from "@/components/ui/StatusBadge";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -27,6 +26,11 @@ interface ValidationStep {
 }
 
 const RHValidation = () => {
+  const { data: activeInterns = [] } = useActiveInterns();
+  const { data: pendingInterns = [] } = usePendingPresentationInterns();
+  const interns = useMemo(() => [...activeInterns, ...pendingInterns], [activeInterns, pendingInterns]);
+  const updateIntern = useUpdateIntern();
+
   const [selectedInternId, setSelectedInternId] = useState<string>("");
   const [confirmModal, setConfirmModal] = useState(false);
   const [deploymentUploaded, setDeploymentUploaded] = useState(false);
@@ -34,7 +38,7 @@ const RHValidation = () => {
   const [evaluationCompleted, setEvaluationCompleted] = useState(false);
   const [supervisorConfirmed, setSupervisorConfirmed] = useState(false);
 
-  const selectedIntern = mockInterns.find(i => i.id === selectedInternId);
+  const selectedIntern = interns.find(i => i.id === selectedInternId);
   const isIT = selectedIntern ? IT_DEPARTMENTS.includes(selectedIntern.department) : false;
 
   const getSteps = (): ValidationStep[] => {
@@ -58,14 +62,24 @@ const RHValidation = () => {
   const allCompleted = steps.length > 0 && steps.every(s => s.completed);
   const completionRate = steps.length > 0 ? Math.round((steps.filter(s => s.completed).length / steps.length) * 100) : 0;
 
-  const handleValidate = () => {
-    toast.success(`Internship validated for ${selectedIntern?.name}! Certificate will be generated.`);
-    setConfirmModal(false);
-    setSelectedInternId("");
-    setDeploymentUploaded(false);
-    setDeliverablesCompleted(false);
-    setEvaluationCompleted(false);
-    setSupervisorConfirmed(false);
+  const handleValidate = async () => {
+    if (!selectedIntern) return;
+    try {
+      await updateIntern.mutateAsync({
+        id: selectedIntern.id,
+        status: INTERN_STATUS.completed_archived,
+        equipment_returned: true,
+      });
+      toast.success(`Internship validated for ${selectedIntern.full_name}. Status: Completed – Archived. Certificate will be generated.`);
+      setConfirmModal(false);
+      setSelectedInternId("");
+      setDeploymentUploaded(false);
+      setDeliverablesCompleted(false);
+      setEvaluationCompleted(false);
+      setSupervisorConfirmed(false);
+    } catch {
+      toast.error("Failed to archive intern.");
+    }
   };
 
   return (
@@ -80,9 +94,12 @@ const RHValidation = () => {
         <div className="bg-card rounded-xl border shadow-sm p-6">
           <h3 className="text-lg font-semibold text-foreground mb-4">Select Intern</h3>
           <div className="space-y-3">
-            {mockInterns.map(intern => (
+            {interns.length === 0 ? (
+              <p className="text-sm text-muted-foreground py-4">No active or pending-presentation interns. Add interns from accepted applications to validate and archive.</p>
+            ) : interns.map(intern => (
               <button
                 key={intern.id}
+                type="button"
                 onClick={() => {
                   setSelectedInternId(intern.id);
                   setDeploymentUploaded(false);
@@ -98,16 +115,15 @@ const RHValidation = () => {
               >
                 <div className="flex items-center gap-3">
                   <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold text-sm shrink-0">
-                    {intern.name.split(" ").map(n => n[0]).join("")}
+                    {intern.full_name.split(" ").map(n => n[0]).join("")}
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-foreground">{intern.name}</p>
-                    <p className="text-xs text-muted-foreground">{intern.department} • {intern.type}</p>
+                    <p className="text-sm font-medium text-foreground">{intern.full_name}</p>
+                    <p className="text-xs text-muted-foreground">{intern.department} • {intern.internship_type}</p>
                   </div>
                 </div>
                 <div className="mt-2 flex items-center gap-2">
-                  <Progress value={intern.progress} className="h-1.5 flex-1" />
-                  <span className="text-xs text-muted-foreground">{intern.progress}%</span>
+                  <span className="text-xs text-muted-foreground">{intern.status}</span>
                 </div>
               </button>
             ))}
@@ -122,8 +138,8 @@ const RHValidation = () => {
               <div className="bg-card rounded-xl border shadow-sm p-6">
                 <div className="flex items-center justify-between mb-4">
                   <div>
-                    <h3 className="text-lg font-semibold text-foreground">{selectedIntern.name}</h3>
-                    <p className="text-sm text-muted-foreground">{selectedIntern.department} — {selectedIntern.type}</p>
+                    <h3 className="text-lg font-semibold text-foreground">{selectedIntern.full_name}</h3>
+                    <p className="text-sm text-muted-foreground">{selectedIntern.department} — {selectedIntern.internship_type}</p>
                   </div>
                   <div className="flex items-center gap-2">
                     {isIT ? (
@@ -223,7 +239,7 @@ const RHValidation = () => {
           <DialogHeader>
             <DialogTitle>Confirm Internship Validation</DialogTitle>
             <DialogDescription>
-              You are about to validate the internship for <span className="font-semibold text-foreground">{selectedIntern?.name}</span> ({selectedIntern?.department}). This will generate the attestation certificate.
+              You are about to validate the internship for <span className="font-semibold text-foreground">{selectedIntern?.full_name}</span> ({selectedIntern?.department}). The intern will be archived (Completed – Archived) and equipment marked returned.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="gap-2">

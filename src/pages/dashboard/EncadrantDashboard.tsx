@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
+import { BarCard, DonutCard, MiniLineCard } from "@/components/dashboard/DashboardCharts";
 
 const fadeIn = {
   hidden: { opacity: 0, y: 16 },
@@ -55,6 +56,26 @@ const EncadrantDashboard = () => {
     { label: "Évaluations à faire", value: pendingEvals, icon: Star, iconBg: "bg-accent/10", iconColor: "text-accent" },
   ];
 
+  const internGrowth = [
+    { name: "Oct", value: Math.max(0, totalInterns - 2) },
+    { name: "Nov", value: Math.max(0, totalInterns - 2) },
+    { name: "Dec", value: Math.max(0, totalInterns - 1) },
+    { name: "Jan", value: Math.max(0, totalInterns - 1) },
+    { name: "Feb", value: totalInterns },
+  ];
+  const typeDistribution = Array.from(
+    encadrantInterns.reduce((m, i) => m.set(i.type, (m.get(i.type) || 0) + 1), new Map<string, number>())
+  ).map(([name, value], idx) => ({
+    name,
+    value,
+    color: idx === 0 ? "hsl(var(--primary))" : "hsl(var(--leoni-purple))",
+  }));
+  const deptDistribution = Array.from(
+    encadrantInterns.reduce((m, i) => m.set(i.department, (m.get(i.department) || 0) + 1), new Map<string, number>())
+  )
+    .slice(0, 6)
+    .map(([name, value]) => ({ name, value }));
+
   const handleValidate = () => {
     toast.success(`Stage validé pour ${selectedIntern} ! Le certificat sera généré.`);
     setShowValidateModal(false);
@@ -82,15 +103,44 @@ const EncadrantDashboard = () => {
               variants={fadeIn}
               initial="hidden"
               animate="visible"
-              className="bg-card rounded-xl border p-5 shadow-sm hover:shadow-md transition-all duration-300"
+              className="kpi-card"
             >
-              <div className={`h-10 w-10 rounded-xl ${kpi.iconBg} flex items-center justify-center mb-4`}>
-                <kpi.icon className={`h-5 w-5 ${kpi.iconColor}`} />
+              <div className="kpi-card-bg" />
+              <div className="relative flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground">{kpi.label}</p>
+                  <p className="mt-2 text-2xl md:text-3xl font-extrabold tracking-tight text-foreground">
+                    {kpi.value}
+                  </p>
+                </div>
+                <div className="opacity-60">
+                  <div className={`h-11 w-11 rounded-2xl ${kpi.iconBg} flex items-center justify-center`}>
+                    <kpi.icon className={`h-5 w-5 ${kpi.iconColor}`} />
+                  </div>
+                </div>
               </div>
-              <p className="text-2xl font-bold text-foreground">{kpi.value}</p>
-              <p className="text-xs text-muted-foreground mt-1">{kpi.label}</p>
             </motion.div>
           ))}
+        </div>
+
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+          <MiniLineCard
+            title="Intern growth"
+            subtitle="Last 5 months (illustrative)"
+            data={internGrowth}
+            dataKey="value"
+          />
+          <DonutCard
+            title="Internship types"
+            subtitle="Distribution of assigned interns"
+            data={typeDistribution.length ? typeDistribution : [{ name: "—", value: 0 }]}
+          />
+          <BarCard
+            title="Departments"
+            subtitle="Assigned interns by department"
+            data={deptDistribution.length ? deptDistribution : [{ name: "—", value: 0 }]}
+            dataKey="value"
+          />
         </div>
 
         {/* Tabs */}

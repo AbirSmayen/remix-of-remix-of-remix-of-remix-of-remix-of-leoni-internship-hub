@@ -1,8 +1,10 @@
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import ThemeToggle from "@/components/ThemeToggle";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { useTranslation } from "react-i18next";
+import { useMemo, useState } from "react";
+import { Menu, X } from "lucide-react";
 
 const TunisianFlag = () => (
   <span className="inline-flex items-center justify-center h-5 w-5 rounded-full overflow-hidden border border-white/10 mx-1.5 shrink-0" title="Tunisia">
@@ -18,7 +20,9 @@ const TunisianFlag = () => (
 const Navbar = () => {
   const { isAuthenticated, user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const { t } = useTranslation();
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   const handleLogout = () => {
     logout();
@@ -26,6 +30,15 @@ const Navbar = () => {
   };
 
   const dashboardRoute = user ? `/dashboard/${user.role}` : "/auth";
+
+  const navItems = useMemo(
+    () => [
+      { key: "home" as const, label: t("nav.home"), href: "/" },
+      { key: "about" as const, label: t("nav.about"), href: "/about" },
+      { key: "contact" as const, label: t("nav.contact"), href: "/contact" },
+    ],
+    [t]
+  );
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-card/80 backdrop-blur-md border-b">
@@ -38,24 +51,35 @@ const Navbar = () => {
         </Link>
 
         <nav className="hidden md:flex items-center gap-1">
-          {[
-            { label: t("nav.home"), to: "/" },
-            { label: t("nav.about"), to: "#about" },
-            { label: t("nav.contact"), to: "#contact" },
-          ].map((item) => (
-            <Link
-              key={item.label}
-              to={item.to}
-              className="px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground rounded-lg hover:bg-secondary transition-all duration-200"
-            >
-              {item.label}
-            </Link>
-          ))}
+          {navItems.map((item) => {
+            const isActive = location.pathname === item.href;
+            return (
+              <Link
+                key={item.key}
+                to={item.href}
+                className={`px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
+                  isActive
+                    ? "text-foreground bg-secondary"
+                    : "text-muted-foreground hover:text-foreground hover:bg-secondary"
+                }`}
+              >
+                {item.label}
+              </Link>
+            );
+          })}
         </nav>
 
         <div className="flex items-center gap-2">
           <LanguageSwitcher />
           <ThemeToggle />
+          <button
+            type="button"
+            className="md:hidden p-2 rounded-lg hover:bg-secondary transition-colors"
+            onClick={() => setMobileOpen((v) => !v)}
+            aria-label="Toggle menu"
+          >
+            {mobileOpen ? <X className="h-5 w-5 text-foreground" /> : <Menu className="h-5 w-5 text-foreground" />}
+          </button>
           {isAuthenticated ? (
             <>
               <Link
@@ -89,6 +113,28 @@ const Navbar = () => {
           )}
         </div>
       </div>
+
+      {mobileOpen && (
+        <div className="md:hidden border-t bg-card/95 backdrop-blur px-6 py-3">
+          <div className="flex flex-col gap-1">
+            {navItems.map((item) => {
+              const isActive = location.pathname === item.href;
+              return (
+                <Link
+                  key={item.key}
+                  to={item.href}
+                  onClick={() => setMobileOpen(false)}
+                  className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    isActive ? "bg-secondary text-foreground" : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                  }`}
+                >
+                  {item.label}
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </header>
   );
 };

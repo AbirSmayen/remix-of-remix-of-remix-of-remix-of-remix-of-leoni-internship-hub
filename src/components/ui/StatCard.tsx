@@ -31,15 +31,25 @@ const StatCard = ({ title, value, icon, color = "text-primary", suffix }: StatCa
   }, [value, isNumeric]);
 
   return (
-    <div className="bg-card rounded-xl border p-6 hover-scale shadow-sm">
-      <div className="flex items-center justify-between mb-4">
-        <span className={`p-2.5 rounded-lg bg-primary/5 ${color}`}>{icon}</span>
+    <div className="kpi-card">
+      <div className="kpi-card-bg" />
+      <div className="relative">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="text-sm text-muted-foreground font-medium">{title}</p>
+            <p className="mt-2 text-3xl md:text-4xl font-extrabold tracking-tight text-foreground">
+              {isNumeric ? count : value}
+              {suffix}
+            </p>
+          </div>
+          <div className={`shrink-0 opacity-60 ${color}`}>
+            <div className="h-11 w-11 rounded-2xl bg-primary/10 flex items-center justify-center">
+              {icon}
+            </div>
+          </div>
+        </div>
+        <div className="mt-4 h-px w-full bg-gradient-to-r from-primary/20 via-border to-transparent" />
       </div>
-      <p className="text-3xl font-bold text-foreground">
-        {isNumeric ? count : value}
-        {suffix}
-      </p>
-      <p className="text-sm text-muted-foreground mt-1">{title}</p>
     </div>
   );
 };

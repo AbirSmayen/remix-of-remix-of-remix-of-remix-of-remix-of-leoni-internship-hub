@@ -28,7 +28,7 @@ const Auth = () => {
       const stored = sessionStorage.getItem("leoni_user");
       if (stored) {
         const user = JSON.parse(stored);
-        const routes: Record<string, string> = { rh: "/dashboard/rh", encadrant: "/dashboard/encadrant", stagiaire: "/dashboard/stagiaire" };
+        const routes: Record<string, string> = { rh: "/dashboard/rh", encadrant: "/dashboard/encadrant", stagiaire: "/dashboard/stagiaire", director: "/dashboard/encadrant" };
         navigate(routes[user.role] || "/dashboard/rh");
       }
     } else {

@@ -169,22 +169,32 @@ export const internshipTypes = ["PFE", "PFA", "Summer", "Perfectionnement"] as c
 export type InternshipType = typeof internshipTypes[number];
 
 export const statusColors: Record<string, { bg: string; text: string }> = {
-  pending: { bg: "bg-warning/10", text: "text-warning" },
-  accepted: { bg: "bg-success/10", text: "text-success" },
-  rejected: { bg: "bg-destructive/10", text: "text-destructive" },
-  preselected: { bg: "bg-primary/10", text: "text-primary" },
-  interview: { bg: "bg-leoni-purple/10", text: "text-leoni-purple" },
-  validated: { bg: "bg-success/10", text: "text-success" },
-  approved: { bg: "bg-success/10", text: "text-success" },
-  needs_revision: { bg: "bg-warning/10", text: "text-warning" },
-  published: { bg: "bg-success/10", text: "text-success" },
-  draft: { bg: "bg-muted", text: "text-muted-foreground" },
-  completed: { bg: "bg-primary/10", text: "text-primary" },
-  present: { bg: "bg-success/10", text: "text-success" },
-  absent: { bg: "bg-destructive/10", text: "text-destructive" },
-  half_day: { bg: "bg-warning/10", text: "text-warning" },
-  open: { bg: "bg-success/10", text: "text-success" },
-  closed: { bg: "bg-destructive/10", text: "text-destructive" },
+  pending: { bg: "bg-warning/10 border-warning/25", text: "text-warning" },
+  accepted: { bg: "bg-success/10 border-success/25", text: "text-success" },
+  approved: { bg: "bg-success/10 border-success/25", text: "text-success" },
+  validated: { bg: "bg-success/10 border-success/25", text: "text-success" },
+  active: { bg: "bg-primary/10 border-primary/25", text: "text-primary" },
+
+  interview: { bg: "bg-leoni-purple/10 border-leoni-purple/25", text: "text-leoni-purple" },
+  preselected: { bg: "bg-primary/10 border-primary/25", text: "text-primary" },
+
+  rejected: { bg: "bg-destructive/10 border-destructive/25", text: "text-destructive" },
+  risk: { bg: "bg-destructive/10 border-destructive/25", text: "text-destructive" },
+  critical: { bg: "bg-destructive/10 border-destructive/25", text: "text-destructive" },
+
+  needs_revision: { bg: "bg-warning/10 border-warning/25", text: "text-warning" },
+  draft: { bg: "bg-muted border-border", text: "text-muted-foreground" },
+  published: { bg: "bg-success/10 border-success/25", text: "text-success" },
+  completed: { bg: "bg-primary/10 border-primary/25", text: "text-primary" },
+
+  archived: { bg: "bg-muted border-border", text: "text-muted-foreground" },
+
+  present: { bg: "bg-success/10 border-success/25", text: "text-success" },
+  absent: { bg: "bg-destructive/10 border-destructive/25", text: "text-destructive" },
+  half_day: { bg: "bg-warning/10 border-warning/25", text: "text-warning" },
+
+  open: { bg: "bg-success/10 border-success/25", text: "text-success" },
+  closed: { bg: "bg-destructive/10 border-destructive/25", text: "text-destructive" },
 };
 
 // Evaluation criteria for weighted scoring
