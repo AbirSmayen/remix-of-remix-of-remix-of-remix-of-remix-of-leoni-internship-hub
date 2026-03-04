@@ -4,9 +4,15 @@ import {
   Edit,
   Save,
   KeyRound,
+  MapPin,
   Phone,
   Briefcase,
-  Building2,
+  Shield,
+  Activity,
+  BookOpen,
+  UserCheck,
+  Award,
+  BadgeCheck,
   X,
 } from "lucide-react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
@@ -14,29 +20,34 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useState } from "react";
 import { toast } from "sonner";
 
-// Mock supervisor profile data (frontend only)
-const mockSupervisorProfile = {
-  phone: "+216 98 456 789",
-  officeLocation: "LEONI Tunisia - El Ghazala, Building A",
-  employeeId: "LEO-ENC-2019-042",
+// Mock extended profile data (frontend only)
+const mockProfile = {
   site: "LEONI Tunisia - El Ghazala",
-  specialty: "Software Engineering & Digital",
-  yearsExperience: 8,
-  internshipTypes: "PFE, PFA, Summer Internship",
+  phone: "+216 71 123 456",
+  address: "Technopole El Ghazala, 2083 Ariana, Tunisia",
+  employeeId: "LEO-RH-2024-001",
+  lastLogin: "Mar 2, 2025 at 14:32",
+  accountStatus: "Active",
+  passwordUpdated: "Jan 15, 2025",
+  activity: {
+    subjectsCreated: 24,
+    internsAccepted: 18,
+    certificatesGenerated: 12,
+    badgesGenerated: 8,
+  },
 };
 
-const EncadrantProfile = () => {
+const RHProfile = () => {
   const { user } = useAuth();
-  const department = user?.department || "IT / Digital";
-
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState({
-    name: user?.name || "Mohamed Amine Ben Nasr",
-    email: user?.email || "encadrant@leoni.com",
-    phone: mockSupervisorProfile.phone,
-    officeLocation: mockSupervisorProfile.officeLocation,
-    department: department,
-    role: "Senior Engineer",
+    name: user?.name || "Admin RH",
+    email: user?.email || "rh@leoni.com",
+    phone: mockProfile.phone,
+    address: mockProfile.address,
+    department: "Human Resources",
+    role: "RH Manager",
+    site: mockProfile.site,
   });
 
   const handleSave = () => {
@@ -49,25 +60,22 @@ const EncadrantProfile = () => {
     .map((n) => n[0])
     .join("")
     .slice(0, 2)
-    .toUpperCase() || "EN";
+    .toUpperCase() || "RH";
 
   return (
-    <DashboardLayout role="encadrant">
-      {/* ——— 1. Profile header banner (blue gradient) ——— */}
+    <DashboardLayout role="rh">
+      {/* ——— 1. Profile header banner ——— */}
       <div
         className="relative rounded-2xl overflow-hidden mb-8"
         style={{
-          background:
-            "linear-gradient(135deg, hsl(220 70% 35% / 0.12) 0%, hsl(199 89% 48% / 0.08) 50%, hsl(220 20% 97%) 100%)",
+          background: "linear-gradient(135deg, hsl(220 70% 35% / 0.12) 0%, hsl(199 89% 48% / 0.08) 50%, hsl(220 20% 97%) 100%)",
           boxShadow: "0 1px 3px 0 rgba(0,0,0,0.04)",
         }}
       >
         <div className="p-6 sm:p-8">
-          <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">
-            Supervisor Profile
-          </h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">Profile</h1>
           <p className="text-muted-foreground text-sm sm:text-base mt-1.5 max-w-xl">
-            Manage your professional information and internship supervision activity.
+            Manage your personal and professional information.
           </p>
         </div>
       </div>
@@ -93,17 +101,16 @@ const EncadrantProfile = () => {
               </div>
               <h2 className="text-xl font-bold text-foreground tracking-tight">{form.name}</h2>
               <span className="inline-flex items-center mt-2 px-3 py-1 rounded-full text-xs font-semibold bg-primary/15 text-primary border border-primary/20">
-                Supervisor
+                {form.role}
               </span>
               <div className="flex flex-wrap justify-center gap-2 mt-3">
                 <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium bg-muted text-muted-foreground">
                   {form.department}
                 </span>
                 <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium bg-muted text-muted-foreground">
-                  {mockSupervisorProfile.site.split(" - ")[0]}
+                  {mockProfile.site.split(" - ")[0]}
                 </span>
               </div>
-              {/* Professional info preview */}
               <div className="mt-5 w-full space-y-2 text-left">
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Mail className="h-4 w-4 shrink-0 text-primary/70" />
@@ -111,11 +118,7 @@ const EncadrantProfile = () => {
                 </div>
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Phone className="h-4 w-4 shrink-0 text-primary/70" />
-                  <span>{mockSupervisorProfile.phone}</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <span className="text-xs font-medium text-muted-foreground/90">ID:</span>
-                  <span>{mockSupervisorProfile.employeeId}</span>
+                  <span>{mockProfile.phone}</span>
                 </div>
               </div>
             </div>
@@ -126,7 +129,9 @@ const EncadrantProfile = () => {
               >
                 <Edit className="h-4 w-4" /> Edit Profile
               </button>
-              <button className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 bg-transparent border-2 border-border text-foreground rounded-xl text-sm font-semibold hover:bg-muted/50 transition-all">
+              <button
+                className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 bg-transparent border-2 border-border text-foreground rounded-xl text-sm font-semibold hover:bg-muted/50 transition-all"
+              >
                 <KeyRound className="h-4 w-4" /> Change Password
               </button>
             </div>
@@ -135,11 +140,11 @@ const EncadrantProfile = () => {
 
         {/* ——— RIGHT: Detailed information cards ——— */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Edit profile inline */}
+          {/* Edit profile modal / inline overlay */}
           {editing && (
             <div
               className="card-elevated rounded-2xl p-6 border border-primary/20 bg-card"
-              style={{ animation: "encadrantFadeIn 0.25s ease-out" }}
+              style={{ animation: "fadeIn 0.25s ease-out" }}
             >
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-lg font-semibold text-foreground">Edit profile</h3>
@@ -153,9 +158,7 @@ const EncadrantProfile = () => {
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1.5">
-                    Full Name
-                  </label>
+                  <label className="block text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1.5">Name</label>
                   <input
                     value={form.name}
                     onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
@@ -163,9 +166,7 @@ const EncadrantProfile = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1.5">
-                    Email
-                  </label>
+                  <label className="block text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1.5">Email</label>
                   <input
                     type="email"
                     value={form.email}
@@ -173,10 +174,16 @@ const EncadrantProfile = () => {
                     className="w-full px-3 py-2.5 rounded-xl border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                   />
                 </div>
+                <div className="sm:col-span-2">
+                  <label className="block text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1.5">Address</label>
+                  <input
+                    value={form.address}
+                    onChange={(e) => setForm((f) => ({ ...f, address: e.target.value }))}
+                    className="w-full px-3 py-2.5 rounded-xl border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                  />
+                </div>
                 <div>
-                  <label className="block text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1.5">
-                    Phone
-                  </label>
+                  <label className="block text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1.5">Phone</label>
                   <input
                     value={form.phone}
                     onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
@@ -184,19 +191,7 @@ const EncadrantProfile = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1.5">
-                    Office Location
-                  </label>
-                  <input
-                    value={form.officeLocation}
-                    onChange={(e) => setForm((f) => ({ ...f, officeLocation: e.target.value }))}
-                    className="w-full px-3 py-2.5 rounded-xl border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1.5">
-                    Department
-                  </label>
+                  <label className="block text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1.5">Department</label>
                   <input
                     value={form.department}
                     onChange={(e) => setForm((f) => ({ ...f, department: e.target.value }))}
@@ -216,7 +211,7 @@ const EncadrantProfile = () => {
           )}
 
           {/* Personal Information */}
-          <div className="card-elevated rounded-2xl overflow-hidden border border-border/80 transition-shadow hover:shadow-[0_10px_30px_-18px_rgba(15,23,42,0.2)]">
+          <div className="card-elevated rounded-2xl overflow-hidden border border-border/80">
             <div className="p-5 sm:p-6 border-b border-border/60 flex items-center gap-3">
               <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
                 <User className="h-5 w-5" />
@@ -224,30 +219,18 @@ const EncadrantProfile = () => {
               <h3 className="text-base font-semibold text-foreground">Personal Information</h3>
             </div>
             <div className="p-5 sm:p-6 space-y-4">
-              <EncadrantInfoRow label="Full Name" value={form.name} />
+              <InfoRow label="Full Name" value={form.name} />
               <div className="h-px bg-border/60" />
-              <EncadrantInfoRow
-                icon={<Mail className="h-4 w-4 text-muted-foreground" />}
-                label="Email"
-                value={form.email}
-              />
+              <InfoRow icon={<Mail className="h-4 w-4 text-muted-foreground" />} label="Email" value={form.email} />
               <div className="h-px bg-border/60" />
-              <EncadrantInfoRow
-                icon={<Phone className="h-4 w-4 text-muted-foreground" />}
-                label="Phone"
-                value={mockSupervisorProfile.phone}
-              />
+              <InfoRow icon={<Phone className="h-4 w-4 text-muted-foreground" />} label="Phone" value={mockProfile.phone} />
               <div className="h-px bg-border/60" />
-              <EncadrantInfoRow
-                icon={<Building2 className="h-4 w-4 text-muted-foreground" />}
-                label="Office Location"
-                value={mockSupervisorProfile.officeLocation}
-              />
+              <InfoRow icon={<MapPin className="h-4 w-4 text-muted-foreground" />} label="Address" value={mockProfile.address} />
             </div>
           </div>
 
           {/* Professional Information */}
-          <div className="card-elevated rounded-2xl overflow-hidden border border-border/80 transition-shadow hover:shadow-[0_10px_30px_-18px_rgba(15,23,42,0.2)]">
+          <div className="card-elevated rounded-2xl overflow-hidden border border-border/80">
             <div className="p-5 sm:p-6 border-b border-border/60 flex items-center gap-3">
               <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
                 <Briefcase className="h-5 w-5" />
@@ -255,26 +238,71 @@ const EncadrantProfile = () => {
               <h3 className="text-base font-semibold text-foreground">Professional Information</h3>
             </div>
             <div className="p-5 sm:p-6 space-y-4">
-              <EncadrantInfoRow label="Department" value={form.department} />
+              <InfoRow label="Role" value={form.role} />
               <div className="h-px bg-border/60" />
-              <EncadrantInfoRow label="Specialty" value={mockSupervisorProfile.specialty} />
+              <InfoRow label="Department" value={form.department} />
               <div className="h-px bg-border/60" />
-              <EncadrantInfoRow
-                label="Years of Experience"
-                value={String(mockSupervisorProfile.yearsExperience)}
-              />
+              <InfoRow label="Site" value={mockProfile.site} />
               <div className="h-px bg-border/60" />
-              <EncadrantInfoRow
-                label="Assigned Internship Types"
-                value={mockSupervisorProfile.internshipTypes}
-              />
+              <InfoRow label="Employee ID" value={mockProfile.employeeId} />
+            </div>
+          </div>
+
+          {/* Security Settings */}
+          <div className="card-elevated rounded-2xl overflow-hidden border border-border/80">
+            <div className="p-5 sm:p-6 border-b border-border/60 flex items-center gap-3">
+              <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+                <Shield className="h-5 w-5" />
+              </div>
+              <h3 className="text-base font-semibold text-foreground">Security</h3>
+            </div>
+            <div className="p-5 sm:p-6 space-y-4">
+              <InfoRow label="Last login" value={mockProfile.lastLogin} />
+              <div className="h-px bg-border/60" />
+              <InfoRow label="Account status" value={mockProfile.accountStatus} valueBadge="success" />
+              <div className="h-px bg-border/60" />
+              <InfoRow label="Password last updated" value={mockProfile.passwordUpdated} />
+            </div>
+          </div>
+
+          {/* Activity Overview */}
+          <div className="card-elevated rounded-2xl overflow-hidden border border-border/80">
+            <div className="p-5 sm:p-6 border-b border-border/60 flex items-center gap-3">
+              <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+                <Activity className="h-5 w-5" />
+              </div>
+              <h3 className="text-base font-semibold text-foreground">Activity Overview</h3>
+            </div>
+            <div className="p-5 sm:p-6">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <MiniStatCard
+                  icon={<BookOpen className="h-5 w-5" />}
+                  label="Subjects Created"
+                  value={mockProfile.activity.subjectsCreated}
+                />
+                <MiniStatCard
+                  icon={<UserCheck className="h-5 w-5" />}
+                  label="Interns Accepted"
+                  value={mockProfile.activity.internsAccepted}
+                />
+                <MiniStatCard
+                  icon={<Award className="h-5 w-5" />}
+                  label="Certificates Generated"
+                  value={mockProfile.activity.certificatesGenerated}
+                />
+                <MiniStatCard
+                  icon={<BadgeCheck className="h-5 w-5" />}
+                  label="Badges Generated"
+                  value={mockProfile.activity.badgesGenerated}
+                />
+              </div>
             </div>
           </div>
         </div>
       </div>
 
       <style>{`
-        @keyframes encadrantFadeIn {
+        @keyframes fadeIn {
           from { opacity: 0; transform: translateY(-4px); }
           to { opacity: 1; transform: translateY(0); }
         }
@@ -283,14 +311,16 @@ const EncadrantProfile = () => {
   );
 };
 
-function EncadrantInfoRow({
+function InfoRow({
   icon,
   label,
   value,
+  valueBadge,
 }: {
   icon?: React.ReactNode;
   label: string;
   value: string;
+  valueBadge?: "success";
 }) {
   return (
     <div className="flex items-start justify-between gap-4">
@@ -298,9 +328,35 @@ function EncadrantInfoRow({
         {icon}
         <span className="text-sm font-medium text-muted-foreground">{label}</span>
       </div>
-      <span className="text-sm font-medium text-foreground text-right shrink-0">{value}</span>
+      <span className="text-sm font-medium text-foreground text-right shrink-0">
+        {valueBadge === "success" ? (
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-success/15 text-success">
+            {value}
+          </span>
+        ) : (
+          value
+        )}
+      </span>
     </div>
   );
 }
 
-export default EncadrantProfile;
+function MiniStatCard({
+  icon,
+  label,
+  value,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: number;
+}) {
+  return (
+    <div className="rounded-xl border border-border/60 bg-muted/30 dark:bg-muted/20 p-4 flex flex-col gap-2 transition-colors hover:bg-muted/50 dark:hover:bg-muted/30">
+      <div className="text-primary">{icon}</div>
+      <p className="text-2xl font-bold text-foreground tracking-tight">{value}</p>
+      <p className="text-xs font-medium text-muted-foreground leading-tight">{label}</p>
+    </div>
+  );
+}
+
+export default RHProfile;

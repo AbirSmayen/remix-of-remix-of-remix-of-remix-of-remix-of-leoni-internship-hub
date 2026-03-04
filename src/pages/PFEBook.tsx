@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Search, Filter, Clock, Building2, GraduationCap, MapPin, BookOpen, Users, ArrowRight, FileText, Upload, CheckCircle } from "lucide-react";
-import { usePFESubjects } from "@/hooks/usePFESubjects";
+import { useMockInternshipStore } from "@/contexts/MockInternshipStore";
 import StatusBadge from "@/components/ui/StatusBadge";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
@@ -12,9 +12,10 @@ const PFEBook = () => {
   const [search, setSearch] = useState("");
   const [deptFilter, setDeptFilter] = useState("all");
   const [siteFilter, setSiteFilter] = useState("all");
-  const { data: subjects, isLoading } = usePFESubjects("PFE");
+  const { subjects } = useMockInternshipStore();
+  const isLoading = false;
 
-  const filtered = (subjects || []).filter((s) => {
+  const filtered = subjects.filter((s) => {
     const matchesSearch = s.title.toLowerCase().includes(search.toLowerCase()) || s.description.toLowerCase().includes(search.toLowerCase());
     const matchesDept = deptFilter === "all" || s.department === deptFilter;
     const matchesSite = siteFilter === "all" || s.site === siteFilter;
@@ -122,9 +123,16 @@ const PFEBook = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filtered.map((subject) => (
               <div key={subject.id} className="bg-card rounded-xl border p-6 hover-scale transition-all group">
-                <div className="flex items-start justify-between mb-3">
+                <div className="flex items-start justify-between mb-3 gap-2">
                   <span className="text-xs font-mono font-semibold text-primary bg-primary/5 px-2.5 py-1 rounded-full">{subject.subject_id}</span>
-                  <StatusBadge status={subject.status === "open" ? "open" : "closed"} />
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    {subject.requires_technical_interview ? (
+                      <span className="text-[10px] font-semibold text-primary bg-primary/10 px-2 py-1 rounded-full whitespace-nowrap">🔵 Technical Interview Required</span>
+                    ) : (
+                      <span className="text-[10px] font-semibold text-success bg-success/10 px-2 py-1 rounded-full whitespace-nowrap">🟢 No Technical Interview</span>
+                    )}
+                    <StatusBadge status={subject.status === "open" ? "open" : "closed"} />
+                  </div>
                 </div>
                 <h3 className="text-base font-semibold text-foreground mb-2 line-clamp-2 group-hover:text-primary transition-colors">{subject.title}</h3>
                 <p className="text-sm text-muted-foreground mb-4 line-clamp-2">{subject.description}</p>

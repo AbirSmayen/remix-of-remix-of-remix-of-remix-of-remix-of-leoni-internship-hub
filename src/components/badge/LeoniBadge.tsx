@@ -1,6 +1,8 @@
 /**
- * Reusable LEONI intern badge component — pixel-accurate replica of the physical badge.
- * Light blue-grey card with dark LEONI logo, 5 metallic stars, "Stagiaire Externe" title.
+ * LEONI intern badge — pixel-perfect replica per reference image.
+ * Light grey background, LEONI top-right, photo placeholder top-left,
+ * 5 dark grey stars, "Stagiaire Externe" italic serif reddish-brown,
+ * two-column label/value layout. Do NOT redesign.
  */
 
 interface LeoniBadgeProps {
@@ -13,67 +15,89 @@ interface LeoniBadgeProps {
 }
 
 const formatDateFR = (dateStr: string) =>
-  new Date(dateStr).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
+  new Date(dateStr).toLocaleDateString("fr-FR", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
 
-const LeoniBadge = ({ matricule, name, department, supervisor, startDate, endDate }: LeoniBadgeProps) => {
+const LeoniBadge = ({
+  matricule,
+  name,
+  department,
+  supervisor,
+  startDate,
+  endDate,
+}: LeoniBadgeProps) => {
   return (
     <div
-      className="relative rounded-lg shadow-xl overflow-hidden w-full max-w-[480px]"
+      className="relative overflow-hidden rounded-lg w-full max-w-[420px]"
       style={{
-        aspectRatio: "1.65 / 1",
-        background: "linear-gradient(135deg, #dce6f0 0%, #e8eef5 40%, #dde5ed 100%)",
-        border: "1px solid #bcc8d4",
+        aspectRatio: "1.5 / 1",
+        background: "#f3f7ff",
+        border: "1px solid #cfe0ff",
+        boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
       }}
     >
-      {/* LEONI logo top-right */}
-      <div className="absolute top-[8%] right-[6%]">
+      {/* Top-left photo placeholder — ~50x30px, rounded, #d3d3d3 */}
+      <div
+        className="absolute left-4 top-4 rounded"
+        style={{
+          width: "50px",
+          height: "30px",
+          background: "#d3d3d3",
+        }}
+      />
+
+      {/* LEONI — top-right, bold uppercase sans-serif, #333333 */}
+      <div className="absolute right-4 top-4 text-right">
         <span
-          className="text-[#2a2a2a] font-black tracking-[0.18em]"
-          style={{ fontFamily: "Arial Black, Impact, sans-serif", fontSize: "clamp(18px, 4.5vw, 26px)" }}
+          style={{
+            fontFamily: "Arial Black, Helvetica Neue Bold, sans-serif",
+            fontWeight: 900,
+            fontSize: "20px",
+            letterSpacing: "0.05em",
+            color: "#1d4ed8",
+          }}
         >
           LEONI
         </span>
       </div>
 
-      {/* Photo placeholder – top-left, rounded grey chip */}
-      <div className="absolute top-[7%] left-[5%]">
-        <div
-          className="bg-[#b8c4d0] rounded-[4px]"
-          style={{ width: "clamp(45px, 12vw, 65px)", height: "clamp(28px, 7vw, 38px)" }}
-        />
-      </div>
-
-      {/* 5 Stars – centered */}
-      <div className="absolute top-[28%] left-1/2 -translate-x-1/2 flex items-center gap-[6px]">
+      {/* 5 stars — centered */}
+      <div className="absolute left-1/2 top-[28%] flex -translate-x-1/2 items-center justify-center gap-1.5">
         {[0, 1, 2, 3, 4].map((i) => (
-          <svg key={i} style={{ width: "clamp(16px, 4vw, 22px)", height: "clamp(16px, 4vw, 22px)" }} viewBox="0 0 24 24" fill="none">
-            <path
-              d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
-              fill="#6B6B6B"
-              stroke="#4a4a4a"
-              strokeWidth="0.6"
-            />
+          <svg
+            key={i}
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="#2563eb"
+          >
+            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
           </svg>
         ))}
       </div>
 
-      {/* "Stagiaire Externe" title */}
-      <div className="absolute top-[42%] left-1/2 -translate-x-1/2 whitespace-nowrap">
+      {/* "Stagiaire Externe" — italic serif, centered */}
+      <div className="absolute left-1/2 top-[42%] -translate-x-1/2 whitespace-nowrap">
         <span
-          className="font-bold italic"
           style={{
-            fontFamily: "Georgia, 'Times New Roman', serif",
-            fontSize: "clamp(13px, 3.5vw, 18px)",
-            color: "#8B2500",
-            letterSpacing: "0.04em",
+            fontFamily: "Georgia, Times New Roman, serif",
+            fontStyle: "italic",
+            fontSize: "16px",
+            color: "#1e40af",
           }}
         >
           Stagiaire Externe
         </span>
       </div>
 
-      {/* Data fields */}
-      <div className="absolute top-[54%] left-[5%] right-[5%] space-y-[3px]">
+      {/* Bottom section — two-column label/value */}
+      <div
+        className="absolute left-4 right-4 top-[52%] space-y-1.5"
+        style={{ fontSize: "13px" }}
+      >
         {[
           ["Matricule", matricule],
           ["Nom & prénom", name],
@@ -82,24 +106,22 @@ const LeoniBadge = ({ matricule, name, department, supervisor, startDate, endDat
           ["Début de stage", formatDateFR(startDate)],
           ["Fin de stage", formatDateFR(endDate)],
         ].map(([label, value]) => (
-          <div key={label} className="flex">
+          <div key={label} className="flex gap-6">
             <span
-              className="font-bold shrink-0"
               style={{
                 fontFamily: "Arial, Helvetica, sans-serif",
-                fontSize: "clamp(10px, 2.6vw, 14px)",
-                color: "#2a2a2a",
-                width: "clamp(100px, 30%, 160px)",
+                fontWeight: 700,
+                color: "#333333",
+                minWidth: "140px",
               }}
             >
               {label}
             </span>
             <span
-              className="font-bold"
               style={{
                 fontFamily: "Arial, Helvetica, sans-serif",
-                fontSize: "clamp(10px, 2.6vw, 14px)",
-                color: "#2a2a2a",
+                fontWeight: 400,
+                color: "#333333",
               }}
             >
               {value}

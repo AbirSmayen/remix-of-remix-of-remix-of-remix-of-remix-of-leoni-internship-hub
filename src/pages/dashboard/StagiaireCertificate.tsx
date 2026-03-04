@@ -1,8 +1,9 @@
-import { Award, Download, Lock, Clock } from "lucide-react";
+import { Download, Lock, Printer } from "lucide-react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { mockInterns } from "@/data/mockData";
 import { useState, useRef } from "react";
 import { toast } from "sonner";
+import InternshipCertificate from "@/components/certificates/InternshipCertificate";
 
 const intern = mockInterns[1];
 
@@ -11,12 +12,7 @@ const formatDate = (dateStr: string) => {
   return d.toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" });
 };
 
-const calcDuration = (start: string, end: string) => {
-  const s = new Date(start);
-  const e = new Date(end);
-  const months = (e.getFullYear() - s.getFullYear()) * 12 + e.getMonth() - s.getMonth();
-  return months <= 1 ? "1 mois" : `${months} mois`;
-};
+const safe = (v?: string) => (v && v.trim().length ? v : "—");
 
 const StagiaireCertificate = () => {
   // In real app, this comes from backend based on intern.validated
@@ -24,7 +20,7 @@ const StagiaireCertificate = () => {
   const certRef = useRef<HTMLDivElement>(null);
   const today = new Date().toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" });
 
-  const handleDownloadPDF = () => {
+  const openPrintWindow = (intent: "download" | "print") => {
     if (!isValidated) {
       toast.error("Certificate not available until final validation.");
       return;
@@ -33,96 +29,124 @@ const StagiaireCertificate = () => {
     const printWindow = window.open("", "_blank");
     if (!printWindow) { toast.error("Please allow popups to download the certificate."); return; }
     
+    const idNumber = (intern as any).cin || intern.matricule;
+    const logoUrl = `${window.location.origin}/leoni-logo.svg`;
+
     printWindow.document.write(`
       <!DOCTYPE html>
       <html><head><title>Attestation de Stage - ${intern.name}</title>
       <style>
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Poppins', sans-serif; padding: 40px; color: #1a1a2e; }
-        @media print { body { padding: 20px; } @page { margin: 15mm; size: A4; } }
-        .cert { max-width: 800px; margin: 0 auto; border: 3px solid #1a365d; padding: 48px; position: relative; }
-        .cert::before { content: ''; position: absolute; top: 8px; left: 8px; right: 8px; bottom: 8px; border: 1px solid #3182ce; pointer-events: none; }
-        .header { text-align: center; margin-bottom: 36px; border-bottom: 2px solid #1a365d; padding-bottom: 24px; }
-        .logo-text { font-size: 28px; font-weight: 800; color: #1a365d; letter-spacing: 6px; }
-        .subtitle { font-size: 11px; color: #666; letter-spacing: 2px; margin-top: 4px; }
-        .title { font-size: 22px; font-weight: 700; color: #1a365d; text-align: center; margin: 28px 0 12px; letter-spacing: 3px; }
-        .year { text-align: center; font-size: 14px; color: #555; margin-bottom: 28px; }
-        .section { margin-bottom: 24px; }
-        .section-title { font-size: 12px; font-weight: 600; color: #1a365d; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 12px; border-bottom: 1px solid #e2e8f0; padding-bottom: 6px; }
-        .field-row { display: flex; justify-content: space-between; padding: 6px 0; font-size: 13px; border-bottom: 1px dotted #e2e8f0; }
-        .field-label { color: #666; }
-        .field-value { font-weight: 500; color: #1a1a2e; }
-        .body-text { font-size: 13px; line-height: 1.8; color: #333; text-align: justify; margin: 20px 0; }
-        .signatures { display: flex; justify-content: space-between; margin-top: 48px; }
-        .sig-block { text-align: center; width: 45%; }
-        .sig-label { font-size: 11px; color: #666; margin-bottom: 60px; }
-        .sig-line { border-top: 1px solid #333; padding-top: 8px; font-size: 12px; font-weight: 600; }
-        .footer { text-align: center; margin-top: 36px; font-size: 10px; color: #999; border-top: 1px solid #e2e8f0; padding-top: 12px; }
+        :root { --primary: 220 70% 35%; --secondary: 252 56% 57%; }
+        body { font-family: 'Poppins', sans-serif; padding: 0; color: #0f172a; -webkit-print-color-adjust: exact; print-color-adjust: exact; background: #f8fafc; }
+        @page { margin: 12mm; size: A4; }
+        @media print { body { background: #ffffff; } }
+
+        .page-wrap { padding: 18px; display: flex; justify-content: center; }
+        .sheet {
+          width: 210mm;
+          min-height: 297mm;
+          background: #ffffff;
+          position: relative;
+          overflow: hidden;
+          border: 2px solid hsl(var(--primary) / 0.45);
+        }
+        .sheet::before { content: ''; position: absolute; inset: 10px; border: 1px solid hsl(var(--primary) / 0.18); pointer-events: none; }
+        .corner {
+          position: absolute; right: 0; bottom: 0; width: 52%; height: 26%;
+          background: linear-gradient(135deg, transparent 0%, transparent 45%, hsl(var(--primary) / 0.10) 72%, hsl(var(--secondary) / 0.10) 100%);
+          clip-path: polygon(25% 55%, 100% 0%, 100% 100%, 0% 100%);
+          pointer-events: none;
+        }
+        .content { padding: 18mm 18mm 16mm; position: relative; }
+
+        .top { display: flex; align-items: flex-start; justify-content: space-between; }
+        .brand { display: flex; gap: 10px; align-items: center; }
+        .brand img { height: 34px; width: auto; }
+        .brand .name { font-weight: 700; font-size: 12px; letter-spacing: .02em; }
+        .brand .sub { font-weight: 700; font-size: 10px; letter-spacing: .22em; color: rgba(15,23,42,0.45); }
+        .meta { font-size: 10px; color: rgba(15,23,42,0.55); text-align: right; }
+
+        .title-wrap { margin-top: 24mm; text-align: center; }
+        .title { font-family: Georgia, 'Times New Roman', serif; font-size: 22px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+        .rule { margin: 10px auto 0; height: 1px; width: 260px; background: hsl(var(--primary) / 0.35); }
+
+        .body { margin: 14mm auto 0; max-width: 150mm; font-size: 13px; line-height: 1.9; color: rgba(15,23,42,0.80); }
+        .b { font-weight: 700; color: rgba(15,23,42,0.95); }
+        .p { text-align: justify; }
+        .mt { margin-top: 14px; }
+
+        .sign { margin: 18mm auto 0; max-width: 150mm; display: flex; justify-content: flex-end; }
+        .sign .block { text-align: right; font-size: 12px; color: rgba(15,23,42,0.70); }
+        .sign .line { margin-top: 22mm; width: 240px; border-top: 1px solid rgba(15,23,42,0.35); padding-top: 8px; }
+        .sign .who { font-weight: 700; color: rgba(15,23,42,0.95); }
+        .sign .role { font-size: 11px; color: rgba(15,23,42,0.55); margin-top: 2px; }
+
+        .stamp { position: absolute; right: 18mm; bottom: 24mm; height: 32mm; width: 58mm; border-radius: 10px; border: 1px dashed rgba(15,23,42,0.18); background: rgba(255,255,255,0.75); display: flex; align-items: center; justify-content: center; }
+        .stamp span { font-size: 10px; letter-spacing: .22em; font-weight: 700; color: rgba(15,23,42,0.30); text-transform: uppercase; }
+
+        .footer-band { position: absolute; left: 0; right: 0; bottom: 0; height: 18mm; background: linear-gradient(90deg, hsl(var(--primary) / 0.10) 0%, hsl(var(--secondary) / 0.10) 55%, transparent 100%); }
+        .footer { position: absolute; left: 18mm; right: 18mm; bottom: 6mm; display: flex; justify-content: space-between; font-size: 10px; color: rgba(15,23,42,0.45); }
       </style></head><body>
-      <div class="cert">
-        <div class="header">
-          <div class="logo-text">LEONI</div>
-          <div class="subtitle">WIRING SYSTEMS TUNISIA</div>
-        </div>
-        <div class="title">ATTESTATION DE STAGE</div>
-        <div class="year">Année Universitaire 2025 / 2026</div>
-        
-        <div class="section">
-          <div class="section-title">Entreprise</div>
-          <div class="field-row"><span class="field-label">Raison Sociale</span><span class="field-value">LEONI Wiring Systems Tunisia</span></div>
-          <div class="field-row"><span class="field-label">Adresse</span><span class="field-value">Zone Industrielle, Sousse, Tunisie</span></div>
-          <div class="field-row"><span class="field-label">Responsable</span><span class="field-value">${intern.supervisor}</span></div>
-        </div>
-        
-        <p class="body-text">
-          Je soussigné(e), <strong>${intern.supervisor}</strong>, en qualité d'encadrant(e) au sein de la société <strong>LEONI Wiring Systems Tunisia</strong>, certifie que :
-        </p>
+      <div class="page-wrap">
+        <div class="sheet">
+          <div class="corner"></div>
+          <div class="content">
+            <div class="top">
+              <div class="brand">
+                <img src="${logoUrl}" alt="LEONI" />
+                <div>
+                  <div class="name">LEONI</div>
+                  <div class="sub">WIRING SYSTEMS TUNISIA</div>
+                </div>
+              </div>
+              <div class="meta">N°: ${intern.matricule || "—"}</div>
+            </div>
 
-        <div class="section">
-          <div class="section-title">Le / La Stagiaire</div>
-          <div class="field-row"><span class="field-label">Nom & Prénom</span><span class="field-value">${intern.name}</span></div>
-          <div class="field-row"><span class="field-label">Établissement</span><span class="field-value">${intern.university}</span></div>
-          <div class="field-row"><span class="field-label">Niveau d'études</span><span class="field-value">${intern.degree}</span></div>
-          <div class="field-row"><span class="field-label">Matricule</span><span class="field-value">${intern.matricule}</span></div>
-        </div>
+            <div class="title-wrap">
+              <div class="title">ATTESTATION DE STAGE</div>
+              <div class="rule"></div>
+            </div>
 
-        <p class="body-text">
-          A effectué un stage de type <strong>${intern.type}</strong> au sein du département <strong>${intern.department}</strong>, portant sur le sujet :
-          « <strong>${intern.subject}</strong> ».
-        </p>
+            <div class="body">
+              <div class="p">Nous soussignés, la société <span class="b">LEONI</span>, attestons par la présente que :</div>
+              <div class="p mt">
+                <span class="b">${intern.name}</span>
+                ${idNumber ? ` ayant pour identifiant <span class="b">${idNumber}</span>,` : ``}
+                a effectué un stage au sein du département <span class="b">${intern.department}</span>,
+                sous l’encadrement de <span class="b">${intern.supervisor}</span>,
+                portant sur le sujet <span class="b">« ${intern.subject} »</span>,
+                durant la période du <span class="b">${formatDate(intern.startDate)}</span> au <span class="b">${formatDate(intern.endDate)}</span>.
+              </div>
+              <div class="p mt">La présente attestation est délivrée à l’intéressé(e) pour servir et valoir ce que de droit.</div>
+            </div>
 
-        <div class="section">
-          <div class="section-title">Durée du Stage</div>
-          <div class="field-row"><span class="field-label">Date de début</span><span class="field-value">${formatDate(intern.startDate)}</span></div>
-          <div class="field-row"><span class="field-label">Date de fin</span><span class="field-value">${formatDate(intern.endDate)}</span></div>
-          <div class="field-row"><span class="field-label">Durée totale</span><span class="field-value">${calcDuration(intern.startDate, intern.endDate)}</span></div>
-        </div>
+            <div class="sign">
+              <div class="block">
+                <div>Fait à Tunis le ${today}.</div>
+                <div style="margin-top:10px; font-weight:600; color: rgba(15,23,42,0.80);">Le / La responsable</div>
+                <div class="line">
+                  <div class="who">${intern.supervisor}</div>
+                  <div class="role">Encadrant / Supervisor</div>
+                </div>
+              </div>
+            </div>
 
-        <p class="body-text">
-          La présente attestation est délivrée à l'intéressé(e) pour servir et valoir ce que de droit.
-        </p>
-
-        <div class="signatures">
-          <div class="sig-block">
-            <div class="sig-label">L'Encadrant(e)</div>
-            <div class="sig-line">${intern.supervisor}</div>
+            <div class="stamp"><span>Cachet</span></div>
           </div>
-          <div class="sig-block">
-            <div class="sig-label">Signature & Cachet de l'Entreprise</div>
-            <div class="sig-line">Direction RH — LEONI</div>
+          <div class="footer-band"></div>
+          <div class="footer">
+            <span>LEONI Wiring Systems Tunisia</span>
+            <span>Document généré automatiquement</span>
           </div>
-        </div>
-
-        <div class="footer">
-          Fait à Sousse, le ${today} — LEONI Wiring Systems Tunisia — Document généré automatiquement
         </div>
       </div>
       <script>window.onload = () => { window.print(); }</script>
       </body></html>
     `);
     printWindow.document.close();
-    toast.success("Certificate opened for printing/download.");
+    toast.success(intent === "download" ? "Print dialog opened. Choose “Save as PDF”." : "Print dialog opened.");
   };
 
   return (
@@ -132,7 +156,7 @@ const StagiaireCertificate = () => {
         <p className="text-muted-foreground text-sm mt-1">View and download your internship certificate.</p>
       </div>
 
-      <div className="max-w-3xl mx-auto">
+      <div className="max-w-5xl mx-auto">
         {/* Certificate Preview — always visible, blurred if not validated */}
         <div className="relative">
           <div
@@ -141,74 +165,8 @@ const StagiaireCertificate = () => {
               !isValidated ? "blur-[6px] select-none pointer-events-none" : ""
             }`}
           >
-            {/* Header */}
-            <div className="bg-primary/5 border-b px-8 py-6 text-center">
-              <h2 className="text-2xl font-extrabold text-primary tracking-[6px]">LEONI</h2>
-              <p className="text-[10px] text-muted-foreground tracking-[2px] mt-1">WIRING SYSTEMS TUNISIA</p>
-            </div>
-            
-            <div className="p-8">
-              <h3 className="text-xl font-bold text-foreground text-center tracking-[3px] mb-1">ATTESTATION DE STAGE</h3>
-              <p className="text-center text-sm text-muted-foreground mb-8">Année Universitaire 2025 / 2026</p>
-              
-              {/* Company Section */}
-              <div className="mb-6">
-                <h4 className="text-xs font-semibold text-primary uppercase tracking-wider mb-3 border-b border-border pb-2">Entreprise</h4>
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between py-1 border-b border-dashed border-border"><span className="text-muted-foreground">Raison Sociale</span><span className="font-medium text-foreground">LEONI Wiring Systems Tunisia</span></div>
-                  <div className="flex justify-between py-1 border-b border-dashed border-border"><span className="text-muted-foreground">Adresse</span><span className="font-medium text-foreground">Zone Industrielle, Sousse</span></div>
-                  <div className="flex justify-between py-1 border-b border-dashed border-border"><span className="text-muted-foreground">Encadrant</span><span className="font-medium text-foreground">{intern.supervisor}</span></div>
-                </div>
-              </div>
-
-              <p className="text-sm text-foreground leading-relaxed mb-6">
-                Je soussigné(e), <strong>{intern.supervisor}</strong>, en qualité d'encadrant(e) au sein de la société <strong>LEONI Wiring Systems Tunisia</strong>, certifie que :
-              </p>
-
-              {/* Intern Section */}
-              <div className="mb-6">
-                <h4 className="text-xs font-semibold text-primary uppercase tracking-wider mb-3 border-b border-border pb-2">Le / La Stagiaire</h4>
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between py-1 border-b border-dashed border-border"><span className="text-muted-foreground">Nom & Prénom</span><span className="font-medium text-foreground">{intern.name}</span></div>
-                  <div className="flex justify-between py-1 border-b border-dashed border-border"><span className="text-muted-foreground">Établissement</span><span className="font-medium text-foreground">{intern.university}</span></div>
-                  <div className="flex justify-between py-1 border-b border-dashed border-border"><span className="text-muted-foreground">Niveau d'études</span><span className="font-medium text-foreground">{intern.degree}</span></div>
-                  <div className="flex justify-between py-1 border-b border-dashed border-border"><span className="text-muted-foreground">Matricule</span><span className="font-medium text-foreground">{intern.matricule}</span></div>
-                </div>
-              </div>
-
-              <p className="text-sm text-foreground leading-relaxed mb-6">
-                A effectué un stage de type <strong>{intern.type}</strong> au sein du département <strong>{intern.department}</strong>, portant sur le sujet : « <strong>{intern.subject}</strong> ».
-              </p>
-
-              {/* Duration Section */}
-              <div className="mb-6">
-                <h4 className="text-xs font-semibold text-primary uppercase tracking-wider mb-3 border-b border-border pb-2">Durée du Stage</h4>
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between py-1 border-b border-dashed border-border"><span className="text-muted-foreground">Date de début</span><span className="font-medium text-foreground">{formatDate(intern.startDate)}</span></div>
-                  <div className="flex justify-between py-1 border-b border-dashed border-border"><span className="text-muted-foreground">Date de fin</span><span className="font-medium text-foreground">{formatDate(intern.endDate)}</span></div>
-                  <div className="flex justify-between py-1 border-b border-dashed border-border"><span className="text-muted-foreground">Durée totale</span><span className="font-medium text-foreground">{calcDuration(intern.startDate, intern.endDate)}</span></div>
-                </div>
-              </div>
-
-              <p className="text-sm text-foreground leading-relaxed mb-8">
-                La présente attestation est délivrée à l'intéressé(e) pour servir et valoir ce que de droit.
-              </p>
-
-              {/* Signatures */}
-              <div className="flex justify-between mt-10">
-                <div className="text-center w-[45%]">
-                  <p className="text-xs text-muted-foreground mb-16">L'Encadrant(e)</p>
-                  <div className="border-t border-foreground pt-2 text-sm font-semibold text-foreground">{intern.supervisor}</div>
-                </div>
-                <div className="text-center w-[45%]">
-                  <p className="text-xs text-muted-foreground mb-16">Signature & Cachet</p>
-                  <div className="border-t border-foreground pt-2 text-sm font-semibold text-foreground">Direction RH — LEONI</div>
-                </div>
-              </div>
-
-              <div className="text-center mt-8 pt-4 border-t border-border">
-                <p className="text-[11px] text-muted-foreground">Fait à Sousse, le {today} — LEONI Wiring Systems Tunisia — Document généré automatiquement</p>
-              </div>
+            <div className="p-4 sm:p-6">
+              <InternshipCertificate intern={intern as any} />
             </div>
           </div>
 
@@ -230,12 +188,12 @@ const StagiaireCertificate = () => {
           )}
         </div>
 
-        {/* Download Button */}
-        <div className="mt-6 flex justify-center">
+        {/* Actions */}
+        <div className="mt-6 flex flex-col sm:flex-row justify-center gap-3">
           <button
-            onClick={handleDownloadPDF}
+            onClick={() => openPrintWindow("download")}
             disabled={!isValidated}
-            className={`flex items-center gap-2 px-8 py-3 rounded-xl font-semibold text-sm transition-all shadow-sm ${
+            className={`flex items-center justify-center gap-2 px-8 py-3 rounded-xl font-semibold text-sm transition-all shadow-sm ${
               isValidated
                 ? "bg-primary text-primary-foreground hover:bg-primary/90"
                 : "bg-secondary text-muted-foreground cursor-not-allowed"
@@ -243,6 +201,19 @@ const StagiaireCertificate = () => {
           >
             {isValidated ? <Download className="h-4 w-4" /> : <Lock className="h-4 w-4" />}
             {isValidated ? "Download PDF" : "Téléchargement non disponible"}
+          </button>
+
+          <button
+            onClick={() => openPrintWindow("print")}
+            disabled={!isValidated}
+            className={`flex items-center justify-center gap-2 px-8 py-3 rounded-xl font-semibold text-sm transition-all ${
+              isValidated
+                ? "bg-transparent border-2 border-border text-foreground hover:bg-muted/50"
+                : "bg-secondary text-muted-foreground cursor-not-allowed"
+            }`}
+          >
+            {isValidated ? <Printer className="h-4 w-4" /> : <Lock className="h-4 w-4" />}
+            Print Certificate
           </button>
         </div>
       </div>

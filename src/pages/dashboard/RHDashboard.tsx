@@ -1,12 +1,12 @@
-import { ClipboardList, Users, UserCheck, BookOpen, TrendingUp, Clock, Calendar, Award, Link2, BarChart3, Share2, FileText } from "lucide-react";
+import { ClipboardList, Users, UserCheck, BookOpen, Clock, Calendar, Link2, FileText } from "lucide-react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import StatCard from "@/components/ui/StatCard";
 import StatusBadge from "@/components/ui/StatusBadge";
-import { mockEvents } from "@/data/mockData";
+import { mockEvents, departments } from "@/data/mockData";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
-import { useApplications, usePFESubjects } from "@/hooks/usePFESubjects";
+import { useMockInternshipStore } from "@/contexts/MockInternshipStore";
 import { Link } from "react-router-dom";
 import { BarCard, DonutCard, MiniLineCard } from "@/components/dashboard/DashboardCharts";
 
@@ -14,8 +14,7 @@ const RHDashboard = () => {
   const [publicLinkCopied, setPublicLinkCopied] = useState(false);
   const [shortLinkCopied, setShortLinkCopied] = useState(false);
   const { t } = useTranslation();
-  const { data: applications = [] } = useApplications();
-  const { data: subjects = [] } = usePFESubjects();
+  const { subjects, applications } = useMockInternshipStore();
 
   const pfeBookUrl = `${window.location.origin}/pfe-book`;
   const shortTermBaseUrl = `${window.location.origin}/apply/non-pfe`;
@@ -36,21 +35,16 @@ const RHDashboard = () => {
     setTimeout(() => setShortLinkCopied(false), 3000);
   };
 
-  const handleShareLinkedIn = () => {
-    const url = encodeURIComponent(pfeBookUrl);
-    window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${url}`, "_blank");
-  };
-
   const stats = {
     totalApplications: applications.length,
-    accepted: applications.filter((a: any) => a.status === "accepted").length,
-    pending: applications.filter((a: any) => a.status === "pending").length,
+    accepted: applications.filter((a) => a.status === "accepted").length,
+    pending: applications.filter((a) => a.status === "pending" || a.status === "pending_technical_interview").length,
     totalSubjects: subjects.length,
-    departments: new Set(subjects.map((s: any) => s.department)).size,
+    departments: new Set(subjects.map((s) => s.department)).size,
   };
 
-  const pfeApps = applications.filter((a: any) => a.application_type === "PFE");
-  const nonPfeApps = applications.filter((a: any) => a.application_type !== "PFE");
+  const pfeApps = applications;
+  const nonPfeApps = applications.filter((a) => a.status !== "pending" && a.status !== "pending_technical_interview");
 
   const growthData = [
     { name: "Oct", value: Math.max(0, pfeApps.length - 8) },
@@ -65,7 +59,7 @@ const RHDashboard = () => {
     { name: "Short-term", value: nonPfeApps.length, color: "hsl(var(--leoni-purple))" },
   ];
 
-  const deptCounts = subjects.reduce((acc: Record<string, number>, s: any) => {
+  const deptCounts = subjects.reduce((acc: Record<string, number>, s) => {
     acc[s.department] = (acc[s.department] || 0) + 1;
     return acc;
   }, {});
@@ -94,9 +88,6 @@ const RHDashboard = () => {
           >
             <Link2 className="h-4 w-4" />
             {shortLinkCopied ? "Short-term link copied" : "Generate Short-Term Internship Link"}
-          </button>
-          <button onClick={handleShareLinkedIn} className="flex items-center gap-2 px-4 py-2.5 bg-[hsl(210,80%,45%)] text-white rounded-xl text-sm font-semibold hover:opacity-90 transition-all">
-            <Share2 className="h-4 w-4" /> LinkedIn
           </button>
         </div>
       </div>
@@ -144,13 +135,13 @@ const RHDashboard = () => {
                 </tr>
               </thead>
               <tbody>
-                {applications.slice(0, 5).map((app: any) => (
+                {applications.slice(0, 5).map((app) => (
                   <tr key={app.id} className="border-b last:border-0 table-row-hover">
-                    <td className="px-6 py-4"><p className="text-sm font-medium text-foreground">{app.full_name}</p><p className="text-xs text-muted-foreground">{app.email}</p></td>
-                    <td className="px-6 py-4"><span className="text-xs font-semibold bg-primary/10 text-primary px-2 py-0.5 rounded-full">{app.application_type}</span></td>
+                    <td className="px-6 py-4"><p className="text-sm font-medium text-foreground">{app.fullName}</p><p className="text-xs text-muted-foreground">{app.email}</p></td>
+                    <td className="px-6 py-4"><span className="text-xs font-semibold bg-primary/10 text-primary px-2 py-0.5 rounded-full">PFE</span></td>
                     <td className="px-6 py-4 text-sm text-muted-foreground">{app.university}</td>
-                    <td className="px-6 py-4"><StatusBadge status={app.status} /></td>
-                    <td className="px-6 py-4 text-sm text-muted-foreground">{new Date(app.created_at).toLocaleDateString()}</td>
+                    <td className="px-6 py-4"><StatusBadge status={app.status === "pending_technical_interview" ? "pending_technical_interview" : app.status} /></td>
+                    <td className="px-6 py-4 text-sm text-muted-foreground">{app.appliedAt}</td>
                   </tr>
                 ))}
                 {applications.length === 0 && (

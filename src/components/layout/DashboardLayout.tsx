@@ -1,9 +1,20 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import {
-  LayoutDashboard, BookOpen, Users, Settings, ChevronLeft, ChevronRight, LogOut,
-  GraduationCap, ClipboardList, BarChart3, MessageSquare, Award, Calendar, Bell, FileText, CreditCard, User,
-  CheckCircle, Trophy, Archive, Target, Presentation, Shield
+  LayoutDashboard,
+  BookOpen,
+  Users,
+  User,
+  ChevronLeft,
+  ChevronRight,
+  LogOut,
+  ClipboardList,
+  BarChart3,
+  Calendar,
+  FileText,
+  Trophy,
+  Archive,
+  Shield,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import NotificationBell from "@/components/NotificationBell";
@@ -13,44 +24,42 @@ import { useTranslation } from "react-i18next";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
-  role: "rh" | "encadrant" | "stagiaire" | "director";
+  role: "rh" | "encadrant" | "director" | "admin";
 }
 
 const menuItems = (t: (key: string) => string) => ({
   rh: [
     { icon: LayoutDashboard, label: t("sidebar.rh.dashboard"), to: "/dashboard/rh" },
     { icon: BookOpen, label: t("sidebar.rh.pfeBook"), to: "/dashboard/rh/pfe-book" },
-    { icon: ClipboardList, label: t("sidebar.rh.applications"), to: "/dashboard/rh/applications" },
+    { icon: FileText, label: "Summer Book", to: "/dashboard/rh/summer-book" },
+    { icon: ClipboardList, label: "PFE Candidatures", to: "/dashboard/rh/candidatures" },
     { icon: ClipboardList, label: "Short-Term Applications", to: "/dashboard/rh/short-term-applications" },
     { icon: Users, label: t("sidebar.rh.interns"), to: "/dashboard/rh/interns" },
     { icon: Calendar, label: t("sidebar.rh.events"), to: "/dashboard/rh/events" },
     { icon: BarChart3, label: t("sidebar.rh.statistics"), to: "/dashboard/rh/statistics" },
     { icon: Trophy, label: "Best Projects", to: "/dashboard/rh/voting" },
-    { icon: Archive, label: "Alumni Archive", to: "/dashboard/rh/alumni" },
-    { icon: Settings, label: t("sidebar.rh.settings"), to: "/dashboard/rh/settings" },
+    { icon: Archive, label: "Historique des stagiaires", to: "/dashboard/rh/alumni" },
+    { icon: User, label: t("sidebar.rh.profile"), to: "/dashboard/rh/profile" },
   ],
   encadrant: [
     { icon: LayoutDashboard, label: t("sidebar.enc.dashboard"), to: "/dashboard/encadrant" },
     { icon: Users, label: t("sidebar.enc.myInterns"), to: "/dashboard/encadrant/interns" },
+    { icon: BookOpen, label: "Summer Book", to: "/dashboard/encadrant/summer-book" },
     { icon: Shield, label: "Authorizations", to: "/dashboard/encadrant/authorizations" },
-    { icon: FileText, label: t("sidebar.enc.submissions"), to: "/dashboard/encadrant/submissions" },
-    { icon: BarChart3, label: t("sidebar.enc.progress"), to: "/dashboard/encadrant/progress" },
-    { icon: MessageSquare, label: t("sidebar.enc.evaluations"), to: "/dashboard/encadrant/evaluations" },
-    { icon: Award, label: t("sidebar.enc.certificates"), to: "/dashboard/encadrant/certificates" },
     { icon: User, label: t("sidebar.enc.profile"), to: "/dashboard/encadrant/profile" },
-  ],
-  stagiaire: [
-    { icon: LayoutDashboard, label: t("sidebar.stg.dashboard"), to: "/dashboard/stagiaire" },
-    { icon: GraduationCap, label: t("sidebar.stg.myInternship"), to: "/dashboard/stagiaire/internship" },
-    { icon: FileText, label: t("sidebar.stg.mySubmissions"), to: "/dashboard/stagiaire/submissions" },
-    { icon: BarChart3, label: t("sidebar.stg.progress"), to: "/dashboard/stagiaire/progress" },
-    { icon: Calendar, label: t("sidebar.stg.events"), to: "/dashboard/stagiaire/events" },
-    { icon: CreditCard, label: t("sidebar.stg.myBadge"), to: "/dashboard/stagiaire/badge" },
-    { icon: Award, label: t("sidebar.stg.certificate"), to: "/dashboard/stagiaire/certificate" },
-    { icon: User, label: t("sidebar.stg.profile"), to: "/dashboard/stagiaire/profile" },
   ],
   director: [
     { icon: Trophy, label: "Top Projects Voting", to: "/dashboard/director/voting" },
+  ],
+  admin: [
+    { icon: LayoutDashboard, label: "Overview", to: "/dashboard/admin" },
+    { icon: BookOpen, label: "PFE Subjects", to: "/dashboard/admin/pfe-book" },
+    { icon: FileText, label: "Summer Book", to: "/dashboard/admin/summer-book" },
+    { icon: ClipboardList, label: "PFE Candidatures", to: "/dashboard/admin/candidatures" },
+    { icon: Users, label: "Interns", to: "/dashboard/admin/interns" },
+    { icon: Archive, label: "Historique des stagiaires", to: "/dashboard/admin/alumni" },
+    { icon: BarChart3, label: "Statistics", to: "/dashboard/admin/statistics" },
+    { icon: User, label: "Profile", to: "/dashboard/admin/profile" },
   ],
 });
 
@@ -66,8 +75,8 @@ const DashboardLayout = ({ children, role }: DashboardLayoutProps) => {
   const roleLabels: Record<string, string> = {
     rh: t("sidebar.rhManager"),
     encadrant: t("sidebar.encadrant"),
-    stagiaire: t("sidebar.stagiaire"),
     director: "Director",
+    admin: "Direction Générale",
   };
 
   const handleLogout = () => {

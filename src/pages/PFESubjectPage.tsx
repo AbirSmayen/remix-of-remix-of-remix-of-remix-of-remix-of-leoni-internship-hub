@@ -1,6 +1,6 @@
 import { useParams, Link } from "react-router-dom";
-import { MapPin, Building2, Clock, Users, ArrowLeft, Send } from "lucide-react";
-import { usePFESubjectById } from "@/hooks/usePFESubjects";
+import { MapPin, Building2, Clock, Users, ArrowLeft, Send, FileText } from "lucide-react";
+import { useMockInternshipStore } from "@/contexts/MockInternshipStore";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import StatusBadge from "@/components/ui/StatusBadge";
@@ -8,7 +8,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 const PFESubjectPage = () => {
   const { subjectId } = useParams<{ subjectId: string }>();
-  const { data: subject, isLoading } = usePFESubjectById(subjectId || "");
+  const { getSubjectBySubjectId } = useMockInternshipStore();
+  const subject = subjectId ? getSubjectBySubjectId(subjectId) : undefined;
+  const isLoading = false;
 
   return (
     <div className="min-h-screen bg-background">
@@ -37,8 +39,13 @@ const PFESubjectPage = () => {
           {subject && (
             <div className="bg-card rounded-xl border shadow-sm overflow-hidden">
               <div className="bg-gradient-to-r from-primary to-primary/80 p-8 text-primary-foreground">
-                <div className="flex items-center gap-3 mb-3">
+                <div className="flex items-center gap-3 mb-3 flex-wrap">
                   <span className="text-xs font-mono font-bold bg-primary-foreground/20 px-3 py-1 rounded-full">{subject.subject_id}</span>
+                  {subject.requires_technical_interview ? (
+                    <span className="text-xs font-semibold text-primary bg-primary-foreground/20 px-3 py-1 rounded-full">🔵 Technical Interview Required</span>
+                  ) : (
+                    <span className="text-xs font-semibold text-success bg-success/20 px-3 py-1 rounded-full">🟢 No Technical Interview</span>
+                  )}
                   <StatusBadge status={subject.status === "open" ? "open" : "closed"} />
                 </div>
                 <h1 className="text-2xl md:text-3xl font-bold mb-2">{subject.title}</h1>
@@ -67,6 +74,14 @@ const PFESubjectPage = () => {
                         <span>{subject.department}</span>
                       </div>
                       <div className="flex items-center gap-3 text-muted-foreground">
+                        <FileText className="h-4 w-4 text-primary shrink-0" />
+                        <span>Field: {subject.fieldOfStudy}</span>
+                      </div>
+                      <div className="flex items-center gap-3 text-muted-foreground">
+                        <FileText className="h-4 w-4 text-primary shrink-0" />
+                        <span>Academic level required: {subject.academicLevelRequired}</span>
+                      </div>
+                      <div className="flex items-center gap-3 text-muted-foreground">
                         <Clock className="h-4 w-4 text-primary shrink-0" />
                         <span>Duration: {subject.duration}</span>
                       </div>
@@ -87,6 +102,11 @@ const PFESubjectPage = () => {
                   </div>
                 </div>
 
+                {subject.requires_technical_interview && (
+                  <div className="mb-6 p-4 rounded-lg bg-primary/5 border border-primary/20">
+                    <p className="text-sm font-medium text-primary">This subject requires a technical interview. After applying, RH will review your profile and schedule an interview if shortlisted.</p>
+                  </div>
+                )}
                 {subject.status === "open" && (
                   <Link
                     to={`/apply/${subject.subject_id}`}

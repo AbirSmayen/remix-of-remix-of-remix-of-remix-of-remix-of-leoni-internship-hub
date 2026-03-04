@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useCallback, ReactNode } from "react";
 
-export type UserRole = "rh" | "encadrant" | "stagiaire" | "director";
+export type UserRole = "rh" | "encadrant" | "director" | "admin";
 
 export interface MockUser {
   id: string;
@@ -8,13 +8,14 @@ export interface MockUser {
   email: string;
   role: UserRole;
   avatar?: string;
+  department?: string;
 }
 
 const mockUsers: Record<string, MockUser> = {
   "rh@leoni.com": { id: "u1", name: "Admin RH", email: "rh@leoni.com", role: "rh" },
-  "encadrant@leoni.com": { id: "u2", name: "Mohamed Amine Ben Nasr", email: "encadrant@leoni.com", role: "encadrant" },
-  "stagiaire@leoni.com": { id: "u3", name: "Smayen Abir", email: "stagiaire@leoni.com", role: "stagiaire" },
+  "encadrant@leoni.com": { id: "u2", name: "Mohamed Amine Ben Nasr", email: "encadrant@leoni.com", role: "encadrant", department: "IT / Digital" },
   "director@leoni.com": { id: "u4", name: "Director LEONI", email: "director@leoni.com", role: "director" },
+  "admin@leoni.com": { id: "u5", name: "Direction Générale", email: "admin@leoni.com", role: "admin" },
 };
 
 interface AuthContextType {
@@ -34,7 +35,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const login = useCallback(async (email: string, _password: string): Promise<{ success: boolean; error?: string }> => {
     const found = mockUsers[email.toLowerCase()];
-    if (!found) return { success: false, error: "Invalid credentials. Use rh@leoni.com, encadrant@leoni.com, stagiaire@leoni.com, or director@leoni.com" };
+    if (!found) return { success: false, error: "Invalid credentials. Use rh@leoni.com, encadrant@leoni.com, director@leoni.com, or admin@leoni.com" };
     setUser(found);
     sessionStorage.setItem("leoni_user", JSON.stringify(found));
     return { success: true };

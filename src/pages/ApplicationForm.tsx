@@ -3,14 +3,15 @@ import { useParams, Link } from "react-router-dom";
 import { Upload, Send, CheckCircle, ArrowLeft, FileText, X } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
-import { usePFESubjectById, useSubmitApplication, uploadApplicationFile } from "@/hooks/usePFESubjects";
+import { useMockInternshipStore } from "@/contexts/MockInternshipStore";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const ApplicationForm = () => {
   const { subjectId } = useParams<{ subjectId: string }>();
-  const { data: subject, isLoading: loadingSubject } = usePFESubjectById(subjectId || "");
-  const submitMutation = useSubmitApplication();
+  const { getSubjectBySubjectId, addApplication } = useMockInternshipStore();
+  const subject = subjectId ? getSubjectBySubjectId(subjectId) : undefined;
+  const loadingSubject = false;
 
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -25,31 +26,33 @@ const ApplicationForm = () => {
     e.preventDefault();
     if (!cvFile) { toast.error("Please upload your CV."); return; }
     if (!agreed) { toast.error("Please agree to the terms."); return; }
+    if (!subject) { toast.error("Subject not found."); return; }
 
     setSubmitting(true);
     try {
-      const cvUrl = await uploadApplicationFile(cvFile, "cv");
-      let motivUrl: string | undefined;
-      if (motivFile) motivUrl = await uploadApplicationFile(motivFile, "motivation-letters");
-
-      await submitMutation.mutateAsync({
-        full_name: form.fullName,
-        email: form.email,
-        phone: form.phone,
-        university: form.university,
-        academic_level: form.academicLevel || null,
-        field_of_study: form.fieldOfStudy || null,
-        subject_id: subject?.id || null,
-        application_type: "PFE",
-        cv_url: cvUrl,
-        motivation_letter_url: motivUrl || null,
-        agreed_terms: true,
-        preferred_department: subject?.department || null,
-        preferred_site: subject?.site || null,
-      });
+      addApplication(
+        {
+          fullName: form.fullName,
+          email: form.email,
+          phone: form.phone,
+          university: form.university,
+          academicLevel: form.academicLevel || "",
+          fieldOfStudy: form.fieldOfStudy || "",
+          projectTitle: subject.title,
+          subjectId: subject.subject_id,
+          subjectTitle: subject.title,
+          site: subject.site,
+          department: subject.department,
+          status: subject.requires_technical_interview ? "pending_technical_interview" : "accepted",
+          aiMatchingScore: 85,
+          cvUrl: URL.createObjectURL(cvFile),
+          appliedAt: new Date().toISOString().slice(0, 10),
+        },
+        subject
+      );
       setSubmitted(true);
-    } catch (err: any) {
-      toast.error(err.message || "Failed to submit application.");
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Failed to submit application.");
     } finally {
       setSubmitting(false);
     }
@@ -86,11 +89,19 @@ const ApplicationForm = () => {
 
           {loadingSubject ? (
             <Skeleton className="h-16 w-full mb-6" />
-          ) : subject && (
+          ) : subject ? (
             <div className="bg-primary/5 border border-primary/20 rounded-xl p-4 mb-6">
               <p className="text-xs font-mono text-primary font-semibold">{subject.subject_id}</p>
               <p className="text-sm font-semibold text-foreground mt-1">{subject.title}</p>
               <p className="text-xs text-muted-foreground">{subject.department} • {subject.site}</p>
+            </div>
+          ) : (
+            <div className="p-4 mb-6 rounded-xl bg-destructive/10 border border-destructive/20 text-destructive text-sm">Subject not found.</div>
+          )}
+
+          {subject?.requires_technical_interview && (
+            <div className="mb-6 p-4 rounded-lg bg-primary/5 border border-primary/20">
+              <p className="text-sm font-medium text-primary">This subject requires a technical interview. Your candidacy will be reviewed by RH before acceptance.</p>
             </div>
           )}
 
@@ -118,8 +129,8 @@ const ApplicationForm = () => {
                 <input required value={form.university} onChange={e => setForm(f => ({ ...f, university: e.target.value }))} className="w-full px-4 py-2.5 rounded-lg border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" placeholder="ENSI, INSAT, ENIT..." />
               </div>
               <div>
-                <label className="block text-sm font-medium text-foreground mb-1.5">Academic Level</label>
-                <select value={form.academicLevel} onChange={e => setForm(f => ({ ...f, academicLevel: e.target.value }))} className="w-full px-4 py-2.5 rounded-lg border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20">
+                <label className="block text-sm font-medium text-foreground mb-1.5">Academic Level *</label>
+                <select required value={form.academicLevel} onChange={e => setForm(f => ({ ...f, academicLevel: e.target.value }))} className="w-full px-4 py-2.5 rounded-lg border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20">
                   <option value="">Select level</option>
                   <option value="Licence">Licence</option>
                   <option value="Master">Master</option>
@@ -128,8 +139,8 @@ const ApplicationForm = () => {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-foreground mb-1.5">Field of Study</label>
-                <input value={form.fieldOfStudy} onChange={e => setForm(f => ({ ...f, fieldOfStudy: e.target.value }))} className="w-full px-4 py-2.5 rounded-lg border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" placeholder="Computer Science, EE..." />
+                <label className="block text-sm font-medium text-foreground mb-1.5">Field of Study *</label>
+                <input required value={form.fieldOfStudy} onChange={e => setForm(f => ({ ...f, fieldOfStudy: e.target.value }))} className="w-full px-4 py-2.5 rounded-lg border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" placeholder="Computer Science, EE..." />
               </div>
             </div>
 

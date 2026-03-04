@@ -1,19 +1,20 @@
-import { BookOpen, Link2, Edit, Trash2, Plus, Eye, EyeOff, Search, X, MapPin, Share2 } from "lucide-react";
+import { BookOpen, Link2, Edit, Trash2, Plus, Eye, EyeOff, Search, X, MapPin, Download, Loader2 } from "lucide-react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import StatusBadge from "@/components/ui/StatusBadge";
 import { departments, leoniSites } from "@/data/mockData";
 import type { LeoniSite } from "@/data/mockData";
 import { useState } from "react";
 import { toast } from "sonner";
-import { usePFESubjects, useCreatePFESubject, useUpdatePFESubject, useDeletePFESubject, generateSubjectId } from "@/hooks/usePFESubjects";
+import { useMockInternshipStore } from "@/contexts/MockInternshipStore";
+import { isTechnicalDepartment } from "@/lib/departmentRules";
+import { formatPFEBookData, generatePFEBookPdf } from "@/lib/pdf/pdfGenerator";
 
 const RHPFEBook = () => {
-  const { data: subjects = [], isLoading } = usePFESubjects("PFE");
-  const createMutation = useCreatePFESubject();
-  const updateMutation = useUpdatePFESubject();
-  const deleteMutation = useDeletePFESubject();
+  const { subjects, addSubject, updateSubject, deleteSubject } = useMockInternshipStore();
+  const isLoading = false;
 
   const [publicLinkCopied, setPublicLinkCopied] = useState(false);
+  const [isExportingPdf, setIsExportingPdf] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [skillInput, setSkillInput] = useState("");
@@ -21,8 +22,23 @@ const RHPFEBook = () => {
   const [deptFilter, setDeptFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [siteFilter, setSiteFilter] = useState("all");
+  const [techInterviewTouched, setTechInterviewTouched] = useState(false);
 
-  const emptyForm = { title: "", description: "", skills: [] as string[], department: "IT / Digital", maxInterns: 1, status: "open", site: "Sousse Messadine" as LeoniSite, address: "", supervisor: "", duration: "4 mois" };
+  const emptyForm = {
+    title: "",
+    description: "",
+    skills: [] as string[],
+    department: "IT / Digital",
+    maxInterns: 1,
+    status: "open" as const,
+    site: "Sousse Messadine" as LeoniSite,
+    address: "",
+    supervisor: "",
+    duration: "4 mois",
+    fieldOfStudy: "",
+    academicLevelRequired: "",
+    requires_technical_interview: false,
+  };
   const [form, setForm] = useState(emptyForm);
 
   const pfeBookUrl = `${window.location.origin}/pfe-book`;
@@ -34,14 +50,8 @@ const RHPFEBook = () => {
     setTimeout(() => setPublicLinkCopied(false), 3000);
   };
 
-  const handleShareLinkedIn = () => {
-    const url = encodeURIComponent(pfeBookUrl);
-    const title = encodeURIComponent("LEONI Tunisia PFE Book 2026 — Internship Opportunities");
-    window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${url}&title=${title}`, "_blank");
-  };
-
-  const toggleStatus = async (id: string, current: string) => {
-    await updateMutation.mutateAsync({ id, status: current === "open" ? "closed" : "open" });
+  const toggleStatus = (id: string, current: string) => {
+    updateSubject(id, { status: current === "open" ? "closed" : "open" });
     toast.success("Status updated.");
   };
 
@@ -53,40 +63,70 @@ const RHPFEBook = () => {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.title || !form.description) { toast.error("Please fill all required fields."); return; }
+    if (!form.title || !form.description || !form.fieldOfStudy || !form.academicLevelRequired) {
+      toast.error("Please fill all required fields.");
+      return;
+    }
+    if (!form.skills.length) {
+      toast.error("At least one required skill is mandatory.");
+      return;
+    }
 
     if (editingId) {
-      await updateMutation.mutateAsync({
-        id: editingId,
+      updateSubject(editingId, {
         title: form.title, description: form.description, skills: form.skills,
-        department: form.department, max_interns: form.maxInterns, status: form.status,
+        max_interns: form.maxInterns, status: form.status,
         site: form.site, address: form.address, supervisor: form.supervisor, duration: form.duration,
+        fieldOfStudy: form.fieldOfStudy,
+        academicLevelRequired: form.academicLevelRequired,
+        requires_technical_interview: form.requires_technical_interview,
       });
       toast.success("Subject updated.");
     } else {
-      const subjectId = await generateSubjectId();
-      await createMutation.mutateAsync({
+      const year = new Date().getFullYear();
+      const num = subjects.length + 1;
+      const subjectId = `PFE-${year}-${String(num).padStart(3, "0")}`;
+      addSubject({
         subject_id: subjectId, title: form.title, description: form.description, skills: form.skills,
         department: form.department, max_interns: form.maxInterns, status: form.status,
         site: form.site, address: form.address, supervisor: form.supervisor, duration: form.duration, type: "PFE",
+        fieldOfStudy: form.fieldOfStudy,
+        academicLevelRequired: form.academicLevelRequired,
+        requires_technical_interview: form.requires_technical_interview,
       });
       toast.success(`New PFE subject created: ${subjectId}`);
     }
     setForm(emptyForm);
+    setTechInterviewTouched(false);
     setEditingId(null);
     setShowForm(false);
   };
 
-  const handleEdit = (s: any) => {
-    setForm({ title: s.title, description: s.description, skills: s.skills || [], department: s.department, maxInterns: s.max_interns, status: s.status, site: s.site as LeoniSite, address: s.address || "", supervisor: s.supervisor || "", duration: s.duration || "4 mois" });
+  const handleEdit = (s: typeof subjects[0]) => {
+    setTechInterviewTouched(false);
+    setForm({
+      title: s.title,
+      description: s.description,
+      skills: s.skills || [],
+      department: s.department,
+      maxInterns: s.max_interns,
+      status: s.status,
+      site: s.site as LeoniSite,
+      address: s.address || "",
+      supervisor: s.supervisor || "",
+      duration: s.duration || "4 mois",
+      fieldOfStudy: s.fieldOfStudy || "",
+      academicLevelRequired: s.academicLevelRequired || "",
+      requires_technical_interview: s.requires_technical_interview ?? false,
+    });
     setEditingId(s.id);
     setShowForm(true);
   };
 
-  const handleDelete = async (id: string) => {
-    await deleteMutation.mutateAsync(id);
+  const handleDelete = (id: string) => {
+    deleteSubject(id);
     toast.success("Subject deleted.");
   };
 
@@ -106,15 +146,47 @@ const RHPFEBook = () => {
           <p className="text-muted-foreground text-sm mt-1">Centralized PFE Book — All LEONI Tunisia sites.</p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
-          <button onClick={() => { setForm(emptyForm); setEditingId(null); setShowForm(!showForm); }} className="flex items-center gap-2 px-4 py-2.5 bg-primary text-primary-foreground rounded-xl text-sm font-semibold hover:bg-primary/90 transition-all shadow-sm">
+          <button
+            type="button"
+            disabled={isExportingPdf}
+            onClick={async () => {
+              try {
+                setIsExportingPdf(true);
+                const pdfData = formatPFEBookData(subjects);
+                await generatePFEBookPdf(pdfData);
+                toast.success("PFE Book PDF downloaded.");
+              } catch (e) {
+                toast.error(e instanceof Error ? e.message : "Failed to export PDF.");
+              } finally {
+                setIsExportingPdf(false);
+              }
+            }}
+            className="flex items-center gap-2 px-4 py-2.5 bg-primary text-primary-foreground rounded-xl text-sm font-semibold hover:bg-primary/90 transition-all shadow-sm disabled:opacity-70 disabled:cursor-not-allowed"
+          >
+            {isExportingPdf ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Download className="h-4 w-4" />
+            )}
+            {isExportingPdf ? "Exporting..." : "Export PFE Book (PDF)"}
+          </button>
+          <button
+            onClick={() => {
+              setTechInterviewTouched(false);
+              setForm({
+                ...emptyForm,
+                requires_technical_interview: isTechnicalDepartment(emptyForm.department),
+              });
+              setEditingId(null);
+              setShowForm(!showForm);
+            }}
+            className="flex items-center gap-2 px-4 py-2.5 bg-primary text-primary-foreground rounded-xl text-sm font-semibold hover:bg-primary/90 transition-all shadow-sm"
+          >
             <Plus className="h-4 w-4" /> New PFE Subject
           </button>
           <button onClick={handleGenerateLink} className="flex items-center gap-2 px-4 py-2.5 bg-secondary text-foreground rounded-xl text-sm font-semibold hover:bg-secondary/80 transition-all">
             <Link2 className="h-4 w-4" />
             {publicLinkCopied ? "Copied!" : "Copy Link"}
-          </button>
-          <button onClick={handleShareLinkedIn} className="flex items-center gap-2 px-4 py-2.5 bg-[hsl(210,80%,45%)] text-white rounded-xl text-sm font-semibold hover:opacity-90 transition-all">
-            <Share2 className="h-4 w-4" /> LinkedIn
           </button>
         </div>
       </div>
@@ -131,8 +203,45 @@ const RHPFEBook = () => {
               </div>
               <div>
                 <label className="block text-sm font-medium text-foreground mb-1.5">Department *</label>
-                <select value={form.department} onChange={e => setForm(f => ({ ...f, department: e.target.value }))} className="w-full px-3 py-2.5 rounded-lg border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20">
+                <select
+                  value={form.department}
+                  onChange={(e) => {
+                    const nextDept = e.target.value;
+                    setForm((f) => ({
+                      ...f,
+                      department: nextDept,
+                      requires_technical_interview:
+                        techInterviewTouched ? f.requires_technical_interview : isTechnicalDepartment(nextDept),
+                    }));
+                  }}
+                  className="w-full px-3 py-2.5 rounded-lg border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                >
                   {departments.map(d => <option key={d} value={d}>{d}</option>)}
+                </select>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-1.5">Field of Study *</label>
+                <input
+                  value={form.fieldOfStudy}
+                  onChange={(e) => setForm((f) => ({ ...f, fieldOfStudy: e.target.value }))}
+                  className="w-full px-3 py-2.5 rounded-lg border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  placeholder="e.g. Computer Science, Industrial Engineering..."
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-1.5">Academic Level Required *</label>
+                <select
+                  value={form.academicLevelRequired}
+                  onChange={(e) => setForm((f) => ({ ...f, academicLevelRequired: e.target.value }))}
+                  className="w-full px-3 py-2.5 rounded-lg border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                >
+                  <option value="">Select level</option>
+                  <option value="Licence">Licence</option>
+                  <option value="Master">Master</option>
+                  <option value="Cycle d'Ingénieur">Cycle d'Ingénieur</option>
+                  <option value="Technicien Supérieur">Technicien Supérieur</option>
                 </select>
               </div>
             </div>
@@ -158,7 +267,7 @@ const RHPFEBook = () => {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <label className="block text-sm font-medium text-foreground mb-1.5">Skills</label>
+                <label className="block text-sm font-medium text-foreground mb-1.5">Required Skills *</label>
                 <div className="flex gap-2">
                   <input value={skillInput} onChange={e => setSkillInput(e.target.value)} onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); handleAddSkill(); } }} className="flex-1 px-3 py-2.5 rounded-lg border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" placeholder="Add skill" />
                   <button type="button" onClick={handleAddSkill} className="px-3 py-2.5 bg-secondary text-foreground rounded-lg text-sm font-medium hover:bg-secondary/80">Add</button>
@@ -182,6 +291,21 @@ const RHPFEBook = () => {
                 <label className="block text-sm font-medium text-foreground mb-1.5">Duration</label>
                 <input value={form.duration} onChange={e => setForm(f => ({ ...f, duration: e.target.value }))} className="w-full px-3 py-2.5 rounded-lg border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" placeholder="4 mois" />
               </div>
+            </div>
+            <div className="flex items-center gap-3 pt-2">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={form.requires_technical_interview}
+                  onChange={(e) => {
+                    setTechInterviewTouched(true);
+                    setForm((f) => ({ ...f, requires_technical_interview: e.target.checked }));
+                  }}
+                  className="rounded border-primary h-4 w-4 accent-primary"
+                />
+                <span className="text-sm font-medium text-foreground">Requires Technical Interview</span>
+              </label>
+              <span className="text-xs text-muted-foreground">If checked, candidates must be manually accepted. If unchecked, candidates are auto-accepted.</span>
             </div>
             <div className="flex gap-2 pt-2">
               <button type="submit" className="px-6 py-2.5 bg-primary text-primary-foreground rounded-xl font-semibold text-sm hover:bg-primary/90">{editingId ? "Update" : "Create Subject"}</button>
@@ -223,6 +347,7 @@ const RHPFEBook = () => {
               <tr className="border-b bg-secondary/50">
                 <th className="text-left px-6 py-3 text-xs font-medium text-muted-foreground uppercase">ID</th>
                 <th className="text-left px-6 py-3 text-xs font-medium text-muted-foreground uppercase">Title</th>
+                <th className="text-left px-6 py-3 text-xs font-medium text-muted-foreground uppercase">Required Skills</th>
                 <th className="text-left px-6 py-3 text-xs font-medium text-muted-foreground uppercase">Site</th>
                 <th className="text-left px-6 py-3 text-xs font-medium text-muted-foreground uppercase">Dept</th>
                 <th className="text-left px-6 py-3 text-xs font-medium text-muted-foreground uppercase">Interns</th>
@@ -235,8 +360,26 @@ const RHPFEBook = () => {
                 <tr key={s.id} className="border-b last:border-0 hover:bg-secondary/30 transition-colors">
                   <td className="px-6 py-4 text-xs font-mono text-primary font-semibold">{s.subject_id}</td>
                   <td className="px-6 py-4">
-                    <p className="text-sm font-medium text-foreground">{s.title}</p>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <p className="text-sm font-medium text-foreground">{s.title}</p>
+                      {s.requires_technical_interview ? (
+                        <span className="text-[10px] font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded-full">🔵 Technical Interview</span>
+                      ) : (
+                        <span className="text-[10px] font-semibold text-success bg-success/10 px-2 py-0.5 rounded-full">🟢 No Interview</span>
+                      )}
+                    </div>
                     <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{s.description}</p>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="flex flex-wrap gap-1.5">
+                      {(s.skills || []).length > 0 ? (s.skills || []).map((skill) => (
+                        <span key={skill} className="inline-flex text-xs font-medium text-primary bg-primary/10 border border-primary/20 px-2 py-0.5 rounded-md whitespace-nowrap">
+                          {skill}
+                        </span>
+                      )) : (
+                        <span className="text-xs text-muted-foreground">—</span>
+                      )}
+                    </div>
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-1.5 text-sm text-muted-foreground">

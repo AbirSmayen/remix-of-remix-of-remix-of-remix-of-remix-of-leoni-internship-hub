@@ -27,22 +27,38 @@ export function FilterSelect({
   );
 }
 
-export function StatusPill({
-  status,
-}: {
-  status: "Pending" | "Interview" | "Rejected" | "Accepted";
-}) {
-  const styles: Record<typeof status, string> = {
-    Pending: "bg-secondary text-muted-foreground border-border",
-    Interview: "bg-primary/10 text-primary border-primary/30",
-    Rejected: "bg-destructive/10 text-destructive border-destructive/30",
-    Accepted: "bg-success/10 text-success border-success/30",
-  };
+const statusStyles: Record<string, string> = {
+  Pending: "bg-warning/10 text-warning border-warning/30",
+  pending: "bg-warning/10 text-warning border-warning/30",
+  Interview: "bg-primary/10 text-primary border-primary/30",
+  "Technical Interview": "bg-primary/10 text-primary border-primary/30",
+  pending_technical_interview: "bg-primary/10 text-primary border-primary/30",
+  Rejected: "bg-destructive/10 text-destructive border-destructive/30",
+  rejected: "bg-destructive/10 text-destructive border-destructive/30",
+  Accepted: "bg-success/10 text-success border-success/30",
+  accepted: "bg-success/10 text-success border-success/30",
+};
+
+const statusLabels: Record<string, string> = {
+  Pending: "Pending",
+  pending: "Pending",
+  Interview: "Technical Interview",
+  "Technical Interview": "Technical Interview",
+  pending_technical_interview: "Technical Interview",
+  Rejected: "Rejected",
+  rejected: "Rejected",
+  Accepted: "Accepted",
+  accepted: "Accepted",
+};
+
+export function StatusPill({ status }: { status: string }) {
+  const style = statusStyles[status] || "bg-secondary text-muted-foreground border-border";
+  const label = statusLabels[status] || status;
   return (
     <span
-      className={`inline-flex items-center px-3 py-1 rounded-full text-[11px] font-semibold border ${styles[status]}`}
+      className={`inline-flex items-center px-3 py-1 rounded-full text-[11px] font-semibold border ${style}`}
     >
-      {status}
+      {label}
     </span>
   );
 }

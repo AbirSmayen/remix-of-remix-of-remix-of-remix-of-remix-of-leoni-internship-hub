@@ -17,8 +17,8 @@ const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
     const roleRoutes: Record<UserRole, string> = {
       rh: "/dashboard/rh",
       encadrant: "/dashboard/encadrant",
-      stagiaire: "/dashboard/stagiaire",
-      director: "/dashboard/encadrant",
+      director: "/dashboard/director/voting",
+      admin: "/dashboard/admin",
     };
     return <Navigate to={roleRoutes[user.role]} replace />;
   }
